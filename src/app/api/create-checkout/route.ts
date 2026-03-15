@@ -22,11 +22,13 @@ export async function POST(req: NextRequest) {
     const stripe = getStripeServer()
 
     // Get subscriber
-    const { data: subscriber } = await supabase
+    const subscriberResult: any = await (supabase as any)
       .from('subscribers')
       .select('*')
       .eq('id', subscriberId)
       .single()
+
+    const subscriber = subscriberResult.data
 
     if (!subscriber) {
       return NextResponse.json(
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
       })
       customerId = customer.id
 
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({ stripe_customer_id: customerId })
         .eq('id', subscriberId)

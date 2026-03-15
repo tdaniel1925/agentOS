@@ -94,7 +94,7 @@ async function handleCallStarted(payload: any): Promise<Response> {
     const metadata = payload.call?.metadata || payload.metadata || {}
 
     // Update call_summaries table with call start time
-    await supabase
+    await (supabase as any)
       .from('call_summaries')
       .update({
         started_at: new Date().toISOString(),

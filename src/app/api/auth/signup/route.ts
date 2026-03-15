@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Create subscriber record using service role (bypasses RLS)
     const serviceSupabase = createServiceClient()
-    const { data: subscriber, error: subscriberError } = await serviceSupabase
+    const subscriberResult: any = await (serviceSupabase as any)
       .from('subscribers')
       .insert({
         auth_user_id: authData.user.id,
@@ -62,6 +62,9 @@ export async function POST(req: NextRequest) {
       })
       .select('id')
       .single()
+
+    const subscriber = subscriberResult.data
+    const subscriberError = subscriberResult.error
 
     if (subscriberError || !subscriber) {
       console.error('Subscriber creation error:', subscriberError)

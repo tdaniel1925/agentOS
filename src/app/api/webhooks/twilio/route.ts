@@ -41,11 +41,14 @@ export async function POST(req: NextRequest) {
 
     // 3. Identify subscriber by phone number
     const supabase = createServiceClient()
-    const { data: subscriber, error: subError } = await supabase
+    const subscriberResult: any = await (supabase as any)
       .from('subscribers')
       .select('*')
       .eq('contact_phone', From)
       .single()
+
+    const subscriber = subscriberResult.data
+    const subError = subscriberResult.error
 
     if (subError || !subscriber) {
       // Unknown number - ask to identify
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
       })
 
       // Log unknown request
-      await supabase.from('unknown_requests').insert({
+      await (supabase as any).from('unknown_requests').insert({
         channel: 'sms',
         sender_identifier: From,
         raw_message: Body,
@@ -82,7 +85,7 @@ export async function POST(req: NextRequest) {
     const simplifiedBody = Body.trim().toUpperCase()
     if (simplifiedBody === 'YES' || simplifiedBody === 'APPROVE') {
       // Check for pending campaign approval
-      const { data: pendingCampaign } = await supabase
+      const pendingCampaignResult: any = await (supabase as any)
         .from('campaigns')
         .select('*')
         .eq('subscriber_id', subscriber.id)
@@ -90,6 +93,8 @@ export async function POST(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
+
+      const pendingCampaign = pendingCampaignResult.data
 
       if (pendingCampaign) {
         // Approve the campaign
@@ -105,7 +110,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Check for pending social post approval
-      const { data: pendingPost } = await supabase
+      const pendingPostResult: any = await (supabase as any)
         .from('pending_approvals')
         .select('*')
         .eq('subscriber_id', subscriber.id)
@@ -115,6 +120,8 @@ export async function POST(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
+
+      const pendingPost = pendingPostResult.data
 
       if (pendingPost) {
         // Approve the social post
@@ -129,7 +136,7 @@ export async function POST(req: NextRequest) {
     const intent = await parseSMSIntent(Body, context)
 
     // 7. Log the command
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: subscriber.id,
       channel: 'sms',
       raw_message: Body,
@@ -163,11 +170,13 @@ async function checkBillingGate(
   subscriberId: string,
   supabase: ReturnType<typeof createServiceClient>
 ): Promise<{ blocked: boolean; message: string }> {
-  const { data: subscriber } = await supabase
+  const subscriberResult: any = await (supabase as any)
     .from('subscribers')
     .select('stripe_subscription_status, status')
     .eq('id', subscriberId)
     .single()
+
+  const subscriber = subscriberResult.data
 
   if (!subscriber) {
     return { blocked: true, message: 'Account not found.' }
@@ -196,31 +205,37 @@ async function loadSubscriberContext(
   supabase: ReturnType<typeof createServiceClient>
 ): Promise<any> {
   // Get subscriber
-  const { data: subscriber } = await supabase
+  const subscriberResult: any = await (supabase as any)
     .from('subscribers')
     .select('*')
     .eq('id', subscriberId)
     .single()
 
+  const subscriber = subscriberResult.data
+
   // Get active features
-  const { data: features } = await supabase
+  const featuresResult: any = await (supabase as any)
     .from('feature_flags')
     .select('*')
     .eq('subscriber_id', subscriberId)
     .eq('enabled', true)
 
+  const features = featuresResult.data
+
   // Get control state
-  const { data: controlState } = await supabase
+  const controlStateResult: any = await (supabase as any)
     .from('control_states')
     .select('*')
     .eq('subscriber_id', subscriberId)
     .single()
 
+  const controlState = controlStateResult.data
+
   // Get recent calls (last 7 days)
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const { data: recentCalls } = await supabase
+  const recentCallsResult: any = await (supabase as any)
     .from('call_summaries')
     .select('*')
     .eq('subscriber_id', subscriberId)
@@ -228,11 +243,13 @@ async function loadSubscriberContext(
     .order('created_at', { ascending: false })
     .limit(20)
 
+  const recentCalls = recentCallsResult.data
+
   // Get recent commands (last 24 hours)
   const oneDayAgo = new Date()
   oneDayAgo.setDate(oneDayAgo.getDate() - 1)
 
-  const { data: recentCommands } = await supabase
+  const recentCommandsResult: any = await (supabase as any)
     .from('commands_log')
     .select('*')
     .eq('subscriber_id', subscriberId)
@@ -240,14 +257,18 @@ async function loadSubscriberContext(
     .order('created_at', { ascending: false })
     .limit(10)
 
+  const recentCommands = recentCommandsResult.data
+
   // Get pending campaigns (awaiting approval)
-  const { data: pendingCampaigns } = await supabase
+  const pendingCampaignsResult: any = await (supabase as any)
     .from('campaigns')
     .select('*')
     .eq('subscriber_id', subscriberId)
     .eq('status', 'preview')
     .order('created_at', { ascending: false })
     .limit(5)
+
+  const pendingCampaigns = pendingCampaignsResult.data
 
   return {
     subscriber,

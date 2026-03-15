@@ -205,7 +205,7 @@ async function handleBotControl(
         modeExpiresAt = calculatePauseUntil(duration)
       }
 
-      await supabase.from('control_states').upsert({
+      await (supabase as any).from('control_states').upsert({
         subscriber_id: subscriber.id,
         mode: 'inbound-only',
         mode_expires_at: modeExpiresAt,
@@ -226,7 +226,7 @@ async function handleBotControl(
         modeExpiresAt = calculatePauseUntil(duration)
       }
 
-      await supabase.from('control_states').upsert({
+      await (supabase as any).from('control_states').upsert({
         subscriber_id: subscriber.id,
         mode: 'vacation',
         mode_expires_at: modeExpiresAt,
@@ -243,18 +243,20 @@ async function handleBotControl(
     // Feature-specific pause
     if (feature) {
       // Get current control state
-      const { data: currentState } = await supabase
+      const queryResult: any = await (supabase as any)
         .from('control_states')
         .select('paused_features')
         .eq('subscriber_id', subscriber.id)
         .single()
+
+      const currentState = queryResult.data
 
       const pausedFeatures = currentState?.paused_features || []
       if (!pausedFeatures.includes(feature)) {
         pausedFeatures.push(feature)
       }
 
-      await supabase.from('control_states').upsert({
+      await (supabase as any).from('control_states').upsert({
         subscriber_id: subscriber.id,
         paused_features: pausedFeatures,
         updated_at: new Date().toISOString(),
@@ -268,7 +270,7 @@ async function handleBotControl(
 
     // Emergency stop
     if (rawMessage.includes('stop everything') || rawMessage === 'stop') {
-      await supabase.from('control_states').upsert({
+      await (supabase as any).from('control_states').upsert({
         subscriber_id: subscriber.id,
         mode: 'emergency_stop',
         paused_until: null,
@@ -287,7 +289,7 @@ async function handleBotControl(
       pausedUntil = calculatePauseUntil(duration)
     }
 
-    await supabase.from('control_states').upsert({
+    await (supabase as any).from('control_states').upsert({
       subscriber_id: subscriber.id,
       mode: 'paused',
       paused_until: pausedUntil,
@@ -305,17 +307,19 @@ async function handleBotControl(
   if (intent.intent === 'RESUME_BOT') {
     // Check if resuming specific feature
     if (feature) {
-      const { data: currentState } = await supabase
+      const queryResult: any = await (supabase as any)
         .from('control_states')
         .select('paused_features')
         .eq('subscriber_id', subscriber.id)
         .single()
 
+      const currentState = queryResult.data
+
       const pausedFeatures = (currentState?.paused_features || []).filter(
         (f: string) => f !== feature
       )
 
-      await supabase.from('control_states').upsert({
+      await (supabase as any).from('control_states').upsert({
         subscriber_id: subscriber.id,
         paused_features: pausedFeatures,
         updated_at: new Date().toISOString(),
@@ -328,7 +332,7 @@ async function handleBotControl(
     }
 
     // Full resume
-    await supabase.from('control_states').upsert({
+    await (supabase as any).from('control_states').upsert({
       subscriber_id: subscriber.id,
       mode: 'full',
       paused_until: null,
@@ -388,11 +392,13 @@ async function handleUnknownCommand(
 
   // Check if they already have this feature
   if (upgrade) {
-    const { data: activeFeatures } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('feature_flags')
       .select('feature_name')
       .eq('subscriber_id', subscriber.id)
       .eq('enabled', true)
+
+    const activeFeatures = queryResult.data
 
     const hasFeature = activeFeatures?.some(
       (f: any) => f.feature_name.toLowerCase() === upgrade.featureName.toLowerCase()
@@ -407,7 +413,7 @@ async function handleUnknownCommand(
   }
 
   // Log to unknown_requests
-  await supabase.from('unknown_requests').insert({
+  await (supabase as any).from('unknown_requests').insert({
     subscriber_id: subscriber.id,
     channel: 'sms',
     sender_identifier: subscriber.contact_phone,
@@ -565,12 +571,14 @@ async function handleEmailCommand(intent: SMSIntent, context: any, subscriber: a
   // PAUSE_CAMPAIGN
   if (intent.intent === 'PAUSE_CAMPAIGN') {
     // Find active campaigns
-    const { data: campaigns } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('campaigns')
       .select('id, prospect_name')
       .eq('subscriber_id', subscriber.id)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
+
+    const campaigns = queryResult.data
 
     if (!campaigns || campaigns.length === 0) {
       return {
@@ -601,12 +609,14 @@ async function handleEmailCommand(intent: SMSIntent, context: any, subscriber: a
 
   // CAMPAIGN_REPORT
   if (intent.intent === 'CAMPAIGN_REPORT') {
-    const { data: campaigns } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('campaigns')
       .select('*')
       .eq('subscriber_id', subscriber.id)
       .order('created_at', { ascending: false })
       .limit(5)
+
+    const campaigns = queryResult.data
 
     if (!campaigns || campaigns.length === 0) {
       return {
@@ -691,12 +701,14 @@ async function handleSocialCommand(intent: SMSIntent, context: any, subscriber: 
 
   // SOCIAL_REPORT
   if (intent.intent === 'SOCIAL_REPORT') {
-    const { data: posts } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('scheduled_posts')
       .select('*')
       .eq('subscriber_id', subscriber.id)
       .order('created_at', { ascending: false })
       .limit(10)
+
+    const posts = queryResult.data
 
     if (!posts || posts.length === 0) {
       return {
@@ -743,7 +755,7 @@ async function handleLeadCommand(intent: SMSIntent, context: any, subscriber: an
   // FOLLOW_UP_LEADS
   if (intent.intent === 'FOLLOW_UP_LEADS') {
     // Get recent leads
-    const { data: recentLeads } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('contacts')
       .select('*')
       .eq('subscriber_id', subscriber.id)
@@ -751,6 +763,8 @@ async function handleLeadCommand(intent: SMSIntent, context: any, subscriber: an
       .eq('status', 'new')
       .order('created_at', { ascending: false })
       .limit(10)
+
+    const recentLeads = queryResult.data
 
     if (!recentLeads || recentLeads.length === 0) {
       return {

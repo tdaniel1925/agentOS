@@ -23,12 +23,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Get rep record
-    const { data: rep, error: repError } = await supabase
+    const repResult: any = await (supabase as any)
       .from('agentos_reps')
       .select('*')
       .eq('email', user.email)
       .eq('status', 'active')
       .single();
+
+    const rep = repResult.data
+    const repError = repResult.error
 
     if (repError || !rep) {
       return NextResponse.json(

@@ -106,17 +106,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Look up rep if identifier provided
     let repId: string | null = null
     if (repIdentifier) {
-      const { data: rep } = await supabase
+      const repResult: any = await (supabase as any)
         .from('subscribers')
         .select('id')
         .or(`email.ilike.%${repIdentifier}%,full_name.ilike.%${repIdentifier}%`)
         .single()
 
+      const rep = repResult.data
       if (rep) repId = rep.id
     }
 
     // Create demo_calls record
-    const { data: demoCall, error: demoError } = await supabase
+    const demoCallResult: any = await (supabase as any)
       .from('demo_calls')
       .insert({
         rep_id: repId,
@@ -135,6 +136,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .select()
       .single()
+
+    const demoCall = demoCallResult.data
+    const demoError = demoCallResult.error
 
     if (demoError) {
       console.error('Error creating demo_calls record:', demoError)
@@ -174,7 +178,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log(`📞 VAPI call triggered: ${vapiCall.id}`)
 
     // Update demo_calls with VAPI call ID
-    await supabase
+    await (supabase as any)
       .from('demo_calls')
       .update({
         status: 'in_progress',
@@ -212,7 +216,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
     // Log to error_log table
-    await supabase.from('error_log').insert({
+    await (supabase as any).from('error_log').insert({
       error_type: 'twilio_sms_webhook',
       error_message: errorMessage,
       stack_trace: error instanceof Error ? error.stack : null,

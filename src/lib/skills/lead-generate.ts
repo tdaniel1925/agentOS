@@ -47,12 +47,14 @@ export async function generateLeads(params: GenerateLeadsParams): Promise<LeadRe
 
   try {
     // Check if subscriber has lead generation feature
-    const { data: feature } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('feature_flags')
       .select('enabled')
       .eq('subscriber_id', subscriber.id)
       .eq('feature_name', 'lead-generation')
       .single()
+
+    const feature = queryResult.data
 
     if (!feature?.enabled) {
       return {
@@ -136,9 +138,11 @@ async function processLeadGeneration(params: GenerateLeadsParams): Promise<void>
     }))
 
     if (contactRecords.length > 0) {
-      const { error: insertError } = await supabase
+      const insertQueryResult: any = await (supabase as any)
         .from('contacts')
         .insert(contactRecords)
+
+      const insertError = insertQueryResult.error
 
       if (insertError) {
         console.error('Error inserting contacts:', insertError)
@@ -200,7 +204,7 @@ async function processLeadGeneration(params: GenerateLeadsParams): Promise<void>
     })
 
     // Step 7: Log command execution
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: params.subscriber.id,
       channel: 'sms',
       sender_identifier: params.subscriber.contact_phone,
@@ -212,7 +216,7 @@ async function processLeadGeneration(params: GenerateLeadsParams): Promise<void>
     })
 
     // Step 8: Log costs
-    await supabase.from('cost_events').insert({
+    await (supabase as any).from('cost_events').insert({
       subscriber_id: params.subscriber.id,
       event_type: 'leads_generated',
       skill_name: 'lead-generate',
@@ -355,7 +359,7 @@ async function deduplicateLeads(
       const emailMatch =
         lead.email &&
         existingContacts.some(
-          (c: any) => c.email && c.email.toLowerCase() === lead.email.toLowerCase()
+          (c: any) => c.email && c.email.toLowerCase() === lead.email!.toLowerCase()
         )
 
       // Check for phone match

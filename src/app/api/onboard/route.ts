@@ -40,11 +40,14 @@ async function onboardSubscriber(subscriberId: string): Promise<void> {
   const supabase = createServiceClient()
 
   // 1. Load subscriber data
-  const { data: subscriber, error } = await supabase
+  const subscriberResult: any = await (supabase as any)
     .from('subscribers')
     .select('*')
     .eq('id', subscriberId)
     .single()
+
+  const subscriber = subscriberResult.data
+  const error = subscriberResult.error
 
   if (error || !subscriber) {
     throw new Error(`Subscriber not found: ${subscriberId}`)
@@ -88,7 +91,7 @@ async function onboardSubscriber(subscriberId: string): Promise<void> {
 
       if (retryCount >= maxRetries) {
         // Alert BotMakers and notify subscriber
-        await supabase
+        await (supabase as any)
           .from('subscribers')
           .update({ status: 'onboard_failed' })
           .eq('id', subscriberId)
@@ -108,8 +111,12 @@ async function onboardSubscriber(subscriberId: string): Promise<void> {
     }
   }
 
+  if (!vapiAssistant) {
+    throw new Error('VAPI assistant creation failed')
+  }
+
   // Save assistant ID
-  await supabase
+  await (supabase as any)
     .from('subscribers')
     .update({ vapi_assistant_id: vapiAssistant.id })
     .eq('id', subscriberId)
@@ -145,7 +152,7 @@ async function onboardSubscriber(subscriberId: string): Promise<void> {
   }
 
   // Save phone number
-  await supabase
+  await (supabase as any)
     .from('subscribers')
     .update({
       vapi_phone_number_id: vapiPhone.id,
@@ -156,7 +163,7 @@ async function onboardSubscriber(subscriberId: string): Promise<void> {
   console.log(`VAPI phone number provisioned: ${vapiPhone.number}`)
 
   // 5. Create control state
-  await supabase.from('control_states').insert({
+  await (supabase as any).from('control_states').insert({
     subscriber_id: subscriberId,
     outbound_calls_enabled: true,
     social_posting_enabled: true,
@@ -209,7 +216,7 @@ Your first weekly report arrives Monday morning.
   }
 
   // 8. Update subscriber status
-  await supabase
+  await (supabase as any)
     .from('subscribers')
     .update({
       status: 'active',

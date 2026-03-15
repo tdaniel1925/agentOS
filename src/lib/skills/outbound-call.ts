@@ -73,7 +73,7 @@ export async function makeOutboundCall(
     })
 
     // 5. Log the call initiation
-    await supabase.from('call_summaries').insert({
+    await (supabase as any).from('call_summaries').insert({
       subscriber_id: params.subscriber.id,
       call_type: 'outbound',
       caller_number: params.contactNumber,
@@ -232,7 +232,7 @@ export async function handleCallCompletion(params: {
     const summary = await generateCallSummary(params.transcript, params.metadata.task)
 
     // Update call_summaries table
-    await supabase
+    await (supabase as any)
       .from('call_summaries')
       .update({
         summary: summary,
@@ -243,11 +243,13 @@ export async function handleCallCompletion(params: {
       .eq('vapi_call_id', params.callId)
 
     // Get subscriber contact info
-    const { data: subscriber } = await supabase
+    const subscriberQueryResult: any = await (supabase as any)
       .from('subscribers')
       .select('contact_phone, name')
       .eq('id', params.subscriberId)
       .single()
+
+    const subscriber = subscriberQueryResult.data
 
     if (subscriber?.contact_phone) {
       // Send summary to subscriber
@@ -264,7 +266,7 @@ export async function handleCallCompletion(params: {
 
     // Log cost event
     const estimatedCost = (params.duration / 60) * 0.15 // Rough estimate: $0.15/minute
-    await supabase.from('cost_events').insert({
+    await (supabase as any).from('cost_events').insert({
       subscriber_id: params.subscriberId,
       event_type: 'vapi_outbound_call',
       cost_usd: estimatedCost,

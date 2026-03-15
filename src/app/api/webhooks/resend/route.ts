@@ -68,7 +68,7 @@ async function handleEmailOpened(
     if (!emailId) return
 
     // Update email record
-    await supabase
+    await (supabase as any)
       .from('campaign_emails')
       .update({
         opened_at: new Date().toISOString(),
@@ -77,7 +77,7 @@ async function handleEmailOpened(
 
     // Update campaign stats
     if (campaignId) {
-      await supabase.rpc('increment_campaign_opens', { campaign_id: campaignId })
+      await (supabase as any).rpc('increment_campaign_opens', { campaign_id: campaignId })
     }
 
     console.log(`✉️ Email ${emailId} opened`)
@@ -100,7 +100,7 @@ async function handleEmailClicked(
     if (!emailId) return
 
     // Update email record
-    await supabase
+    await (supabase as any)
       .from('campaign_emails')
       .update({
         clicked_at: new Date().toISOString(),
@@ -109,7 +109,7 @@ async function handleEmailClicked(
 
     // Update campaign stats
     if (campaignId) {
-      await supabase.rpc('increment_campaign_clicks', { campaign_id: campaignId })
+      await (supabase as any).rpc('increment_campaign_clicks', { campaign_id: campaignId })
     }
 
     console.log(`🖱️ Email ${emailId} clicked`)
@@ -132,16 +132,18 @@ async function handleEmailBounced(
     if (!campaignId || !emailId) return
 
     // Get campaign info
-    const { data: campaign } = await supabase
+    const campaignResult: any = await (supabase as any)
       .from('campaigns')
       .select('*, subscribers(*)')
       .eq('id', campaignId)
       .single()
 
+    const campaign = campaignResult.data
+
     if (!campaign) return
 
     // Mark email as failed
-    await supabase
+    await (supabase as any)
       .from('campaign_emails')
       .update({
         status: 'bounced',
@@ -150,7 +152,7 @@ async function handleEmailBounced(
       .eq('id', emailId)
 
     // Pause campaign
-    await supabase
+    await (supabase as any)
       .from('campaigns')
       .update({
         status: 'paused',
@@ -158,7 +160,7 @@ async function handleEmailBounced(
       .eq('id', campaignId)
 
     // Mark contact email as invalid
-    await supabase
+    await (supabase as any)
       .from('contacts')
       .update({
         status: 'invalid_email',
@@ -191,16 +193,18 @@ async function handleEmailComplained(
     if (!campaignId) return
 
     // Get campaign info
-    const { data: campaign } = await supabase
+    const campaignResult2: any = await (supabase as any)
       .from('campaigns')
       .select('*, subscribers(*)')
       .eq('id', campaignId)
       .single()
 
-    if (!campaign) return
+    const campaign2 = campaignResult2.data
+
+    if (!campaign2) return
 
     // Immediately unsubscribe and pause campaign
-    await supabase
+    await (supabase as any)
       .from('campaigns')
       .update({
         status: 'paused',
@@ -209,19 +213,19 @@ async function handleEmailComplained(
       .eq('id', campaignId)
 
     // Mark contact as unsubscribed
-    await supabase
+    await (supabase as any)
       .from('contacts')
       .update({
         status: 'unsubscribed',
-        tags: supabase.sql`array_append(tags, 'spam_complaint')`,
+        tags: ['spam_complaint'],
       })
-      .eq('subscriber_id', campaign.subscriber_id)
-      .eq('email', campaign.prospect_email)
+      .eq('subscriber_id', campaign2.subscriber_id)
+      .eq('email', campaign2.prospect_email)
 
     // Alert subscriber
     await sendSMS({
-      to: campaign.subscribers.contact_phone,
-      body: `🚨 SPAM COMPLAINT: ${campaign.prospect_name} marked your email as spam. Campaign stopped immediately. They've been unsubscribed.`,
+      to: campaign2.subscribers.contact_phone,
+      body: `🚨 SPAM COMPLAINT: ${campaign2.prospect_name} marked your email as spam. Campaign stopped immediately. They've been unsubscribed.`,
     })
 
     console.log(`🚨 Spam complaint on campaign ${campaignId} - unsubscribed`)

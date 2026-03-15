@@ -91,21 +91,25 @@ async function getActiveItemsCount(
   const supabase = createServiceClient()
 
   if (skillName === 'social-media') {
-    const { count } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('scheduled_posts')
       .select('*', { count: 'exact', head: true })
       .eq('subscriber_id', subscriberId)
       .eq('status', 'scheduled')
 
+    const count = queryResult.count
+
     return count && count > 0 ? { count, type: 'scheduled posts' } : null
   }
 
   if (skillName === 'campaigns') {
-    const { count } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('campaigns')
       .select('*', { count: 'exact', head: true })
       .eq('subscriber_id', subscriberId)
       .eq('status', 'active')
+
+    const count = queryResult.count
 
     return count && count > 0 ? { count, type: 'active campaigns' } : null
   }
@@ -160,7 +164,7 @@ async function cleanupSkillData(
   switch (skillName) {
     case 'social-media':
       // Pause all scheduled posts
-      await supabase
+      await (supabase as any)
         .from('scheduled_posts')
         .update({ status: 'paused' })
         .eq('subscriber_id', subscriberId)
@@ -169,7 +173,7 @@ async function cleanupSkillData(
 
     case 'campaigns':
       // Pause all active campaigns
-      await supabase
+      await (supabase as any)
         .from('campaigns')
         .update({ status: 'paused' })
         .eq('subscriber_id', subscriberId)
@@ -273,11 +277,13 @@ export async function processDowngrade(
     }
 
     // ── Step 3: Deactivate in Supabase ───────────────
-    const { error: flagError } = await supabase
+    const flagQueryResult: any = await (supabase as any)
       .from('feature_flags')
       .update({ enabled: false })
       .eq('subscriber_id', subscriber.id)
       .eq('feature_name', skillName)
+
+    const flagError = flagQueryResult.error
 
     if (flagError) {
       console.error('Error deactivating skill:', flagError)
@@ -306,7 +312,7 @@ export async function processDowngrade(
     })
 
     // ── Step 6: Update subscriber MRR ────────────────
-    await supabase
+    await (supabase as any)
       .from('subscribers')
       .update({ current_mrr: mrr_after })
       .eq('id', subscriber.id)

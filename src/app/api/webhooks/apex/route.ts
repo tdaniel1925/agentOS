@@ -28,7 +28,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ── Log inbound webhook ──────────────────────────
     const idempotencyKey = `inbound_${body.event}_${body.data?.apex_rep_id}_${body.timestamp}`
 
-    await supabase
+    await (supabase as any)
       .from('webhook_events')
       .insert({
         direction: 'inbound',
@@ -38,8 +38,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         delivered_at: new Date().toISOString(),
         idempotency_key: idempotencyKey
       })
-      .onConflict('idempotency_key')
-      .ignore()
     // Ignore duplicates — idempotent
 
     // ── Handle event ─────────────────────────────────
@@ -88,7 +86,7 @@ async function handleRepCreated(
   },
   supabase: any
 ): Promise<void> {
-  const { error } = await supabase.from('agentos_reps').insert({
+  const result: any = await (supabase as any).from('agentos_reps').insert({
     apex_rep_id: data.apex_rep_id,
     apex_rep_code: data.apex_rep_code,
     name: data.name,
@@ -97,6 +95,8 @@ async function handleRepCreated(
     active: true,
     last_synced_at: new Date().toISOString()
   })
+
+  const error = result.error
 
   if (error) {
     console.error('Error creating rep:', error)
@@ -114,7 +114,7 @@ async function handleRepUpdated(
   },
   supabase: any
 ): Promise<void> {
-  const { error } = await supabase
+  const result: any = await (supabase as any)
     .from('agentos_reps')
     .update({
       name: data.name,
@@ -124,6 +124,8 @@ async function handleRepUpdated(
       updated_at: new Date().toISOString()
     })
     .eq('apex_rep_id', data.apex_rep_id)
+
+  const error = result.error
 
   if (error) {
     console.error('Error updating rep:', error)
@@ -138,7 +140,7 @@ async function handleRepDeactivated(
   },
   supabase: any
 ): Promise<void> {
-  const { error } = await supabase
+  const result: any = await (supabase as any)
     .from('agentos_reps')
     .update({
       active: false,
@@ -146,6 +148,8 @@ async function handleRepDeactivated(
       updated_at: new Date().toISOString()
     })
     .eq('apex_rep_id', data.apex_rep_id)
+
+  const error = result.error
 
   if (error) {
     console.error('Error deactivating rep:', error)

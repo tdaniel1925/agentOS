@@ -24,12 +24,15 @@ export async function GET() {
     }
 
     // Get rep record
-    const { data: rep, error: repError } = await supabase
+    const repResult: any = await (supabase as any)
       .from('agentos_reps')
       .select('rep_phone')
       .eq('email', user.email)
       .eq('status', 'active')
       .single();
+
+    const rep = repResult.data
+    const repError = repResult.error
 
     if (repError || !rep) {
       return NextResponse.json(
@@ -68,12 +71,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Get rep record
-    const { data: rep, error: repError } = await supabase
+    const repResult2: any = await (supabase as any)
       .from('agentos_reps')
       .select('id')
       .eq('email', user.email)
       .eq('status', 'active')
       .single();
+
+    const rep = repResult2.data
+    const repError = repResult2.error
 
     if (repError || !rep) {
       return NextResponse.json(
@@ -110,12 +116,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if another rep already has this phone
-    const { data: existingRep } = await supabase
+    const existingRepResult: any = await (supabase as any)
       .from('agentos_reps')
       .select('id, rep_name')
       .eq('rep_phone', formattedPhone)
       .neq('id', rep.id)
       .single();
+
+    const existingRep = existingRepResult.data
 
     if (existingRep) {
       return NextResponse.json(
@@ -125,10 +133,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Update rep_phone
-    const { error: updateError } = await supabase
+    const updateResult: any = await (supabase as any)
       .from('agentos_reps')
       .update({ rep_phone: formattedPhone })
       .eq('id', rep.id);
+
+    const updateError = updateResult.error
 
     if (updateError) {
       console.error('Error updating rep_phone:', updateError);

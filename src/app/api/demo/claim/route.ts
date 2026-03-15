@@ -22,12 +22,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Get rep record
-    const { data: rep, error: repError } = await supabase
+    const repResult: any = await (supabase as any)
       .from('agentos_reps')
       .select('*')
       .eq('email', user.email)
       .eq('status', 'active')
       .single();
+
+    const rep = repResult.data
+    const repError = repResult.error
 
     if (repError || !rep) {
       return NextResponse.json(
@@ -69,13 +72,15 @@ export async function POST(req: NextRequest) {
 
     // Check for duplicate claim
     if (formattedPhone) {
-      const { data: existingClaim } = await supabase
+      const existingClaimResult: any = await (supabase as any)
         .from('claimed_prospects')
         .select('id, rep_code')
         .eq('prospect_phone', formattedPhone)
         .eq('converted', false)
         .gte('expires_at', new Date().toISOString())
         .single();
+
+      const existingClaim = existingClaimResult.data
 
       if (existingClaim) {
         if (existingClaim.rep_code === rep.rep_code) {
@@ -93,7 +98,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create claimed_prospects entry
-    const { data: claim, error: claimError } = await supabase
+    const claimResult: any = await (supabase as any)
       .from('claimed_prospects')
       .insert({
         rep_id: rep.id,
@@ -105,6 +110,9 @@ export async function POST(req: NextRequest) {
       })
       .select('id')
       .single();
+
+    const claim = claimResult.data
+    const claimError = claimResult.error
 
     if (claimError || !claim) {
       console.error('Error creating claim:', claimError);

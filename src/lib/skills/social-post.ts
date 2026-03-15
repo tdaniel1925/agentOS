@@ -40,12 +40,14 @@ export async function createSocialPost(
 
   try {
     // Check if subscriber has social media feature
-    const { data: feature } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('feature_flags')
       .select('enabled')
       .eq('subscriber_id', subscriber.id)
       .eq('feature_name', 'social-media')
       .single()
+
+    const feature = queryResult.data
 
     if (!feature?.enabled) {
       return {
@@ -116,7 +118,7 @@ async function processSocialPostCreation(params: CreatePostParams): Promise<void
         })
 
         // Log for manual review
-        await supabase.from('unknown_requests').insert({
+        await (supabase as any).from('unknown_requests').insert({
           subscriber_id: params.subscriber.id,
           channel: 'social',
           raw_message: post.text,
@@ -145,7 +147,7 @@ async function processSocialPostCreation(params: CreatePostParams): Promise<void
         })
 
         // Store pending post for approval
-        await supabase.from('pending_approvals').insert({
+        await (supabase as any).from('pending_approvals').insert({
           subscriber_id: params.subscriber.id,
           approval_type: 'social_post',
           item_data: {
@@ -161,7 +163,7 @@ async function processSocialPostCreation(params: CreatePostParams): Promise<void
     }
 
     // Log command execution
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: params.subscriber.id,
       channel: 'sms',
       sender_identifier: params.subscriber.contact_phone,
@@ -173,7 +175,7 @@ async function processSocialPostCreation(params: CreatePostParams): Promise<void
     })
 
     // Log costs (Claude Sonnet for generation)
-    await supabase.from('cost_events').insert({
+    await (supabase as any).from('cost_events').insert({
       subscriber_id: params.subscriber.id,
       event_type: 'social_post_created',
       skill_name: 'social-post',
@@ -331,12 +333,14 @@ export async function approveSocialPost(
 
   try {
     // Get pending approval
-    const { data: approval } = await supabase
+    const approvalQueryResult: any = await (supabase as any)
       .from('pending_approvals')
       .select('*')
       .eq('id', approvalId)
       .eq('subscriber_id', subscriberId)
       .single()
+
+    const approval = approvalQueryResult.data
 
     if (!approval) throw new Error('Approval not found')
 
@@ -347,7 +351,7 @@ export async function approveSocialPost(
 
     // In a real implementation, call Predis API here
     // For now, we'll store it in our database
-    await supabase.from('scheduled_posts').insert({
+    await (supabase as any).from('scheduled_posts').insert({
       subscriber_id: subscriberId,
       post_text: posts[currentIndex].text,
       hashtags: posts[currentIndex].hashtags,
@@ -361,7 +365,7 @@ export async function approveSocialPost(
     if (currentIndex + 1 < posts.length) {
       const nextPost = posts[currentIndex + 1]
 
-      await supabase
+      await (supabase as any)
         .from('pending_approvals')
         .update({
           item_data: {
@@ -372,11 +376,13 @@ export async function approveSocialPost(
         .eq('id', approvalId)
 
       // Send next preview
-      const { data: subscriber } = await supabase
+      const subscriberQueryResult: any = await (supabase as any)
         .from('subscribers')
         .select('contact_phone')
         .eq('id', subscriberId)
         .single()
+
+      const subscriber = subscriberQueryResult.data
 
       if (subscriber) {
         const previewMessage = buildPostPreview({
@@ -394,13 +400,15 @@ export async function approveSocialPost(
       }
     } else {
       // All posts approved
-      await supabase.from('pending_approvals').delete().eq('id', approvalId)
+      await (supabase as any).from('pending_approvals').delete().eq('id', approvalId)
 
-      const { data: subscriber } = await supabase
+      const subscriberQueryResult2: any = await (supabase as any)
         .from('subscribers')
         .select('contact_phone')
         .eq('id', subscriberId)
         .single()
+
+      const subscriber = subscriberQueryResult2.data
 
       if (subscriber) {
         await sendSMS({

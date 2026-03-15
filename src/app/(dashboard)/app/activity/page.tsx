@@ -161,7 +161,7 @@ export default async function ActivityLogPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {commands.map((command) => (
+                    {commands.map((command: any) => (
                       <tr key={command.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(command.created_at).toLocaleString()}
@@ -213,7 +213,7 @@ export default async function ActivityLogPage() {
 
             {calls && calls.length > 0 ? (
               <div className="space-y-4">
-                {calls.map((call) => (
+                {calls.map((call: any) => (
                   <div
                     key={call.id}
                     className="border border-gray-200 rounded-lg p-4"

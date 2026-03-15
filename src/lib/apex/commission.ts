@@ -42,11 +42,13 @@ export async function calculateCommission(params: {
   const { subscriberId, oldMrr, newMrr, eventType, stripeEventId } = params
 
   // Load subscriber and rep chain
-  const { data: subscriber } = await supabase
+  const queryResult: any = await (supabase as any)
     .from('subscribers')
     .select('*, reps(*)')
     .eq('id', subscriberId)
     .single()
+
+  const subscriber = queryResult.data
 
   if (!subscriber || !subscriber.rep_id) {
     return [] // No rep assigned, no commission
@@ -73,7 +75,7 @@ export async function calculateCommission(params: {
     })
 
     // Insert commission record
-    await supabase.from('apex_commissions').insert({
+    await (supabase as any).from('apex_commissions').insert({
       rep_id: rep.id,
       subscriber_id: subscriberId,
       event_type: eventType,
@@ -86,7 +88,7 @@ export async function calculateCommission(params: {
     })
 
     // Update rep totals
-    await supabase
+    await (supabase as any)
       .from('reps')
       .update({
         total_mrr: rep.total_mrr + mrrDelta,
@@ -110,11 +112,13 @@ async function buildRepChain(repId: string): Promise<Rep[]> {
   let currentRepId: string | null = repId
 
   while (currentRepId && chain.length < 3) {
-    const { data: rep } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('reps')
       .select('*')
       .eq('id', currentRepId)
       .single()
+
+    const rep = queryResult.data
 
     if (!rep) break
 
@@ -134,15 +138,17 @@ export async function updateRepSubscriberCount(
 ): Promise<void> {
   const supabase = createServiceClient()
 
-  const { data: rep } = await supabase
+  const queryResult: any = await (supabase as any)
     .from('reps')
     .select('total_subscribers')
     .eq('id', repId)
     .single()
 
+  const rep = queryResult.data
+
   if (!rep) return
 
-  await supabase
+  await (supabase as any)
     .from('reps')
     .update({
       total_subscribers: rep.total_subscribers + delta,

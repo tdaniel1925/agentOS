@@ -102,12 +102,14 @@ export async function checkIfSkillActive(
 ): Promise<boolean> {
   const supabase = createServiceClient()
 
-  const { data: feature } = await supabase
+  const queryResult: any = await (supabase as any)
     .from('feature_flags')
     .select('enabled')
     .eq('subscriber_id', subscriberId)
     .eq('feature_name', skillName)
     .single()
+
+  const feature = queryResult.data
 
   return feature?.enabled === true
 }
@@ -261,7 +263,7 @@ export async function processUpgrade(
     }
 
     // ── Step 3: Activate skill in Supabase ───────────
-    const { error: flagError } = await supabase
+    const flagQueryResult: any = await (supabase as any)
       .from('feature_flags')
       .upsert({
         subscriber_id: subscriber.id,
@@ -271,6 +273,8 @@ export async function processUpgrade(
         price_add_on: skill.price,
         skill_name: skillName
       })
+
+    const flagError = flagQueryResult.error
 
     if (flagError) {
       console.error('Error activating skill:', flagError)
@@ -292,11 +296,11 @@ export async function processUpgrade(
       mrr_delta: skill.price,
       total_mrr: mrr_after,
       stripe_subscription_id: subscriber.stripe_subscription_id,
-      stripe_invoice_id: invoice.id
+      stripe_invoice_id: invoice?.id || 'unknown'
     })
 
     // ── Step 5: Update subscriber MRR ────────────────
-    await supabase
+    await (supabase as any)
       .from('subscribers')
       .update({ current_mrr: mrr_after })
       .eq('id', subscriber.id)

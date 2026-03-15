@@ -60,12 +60,14 @@ export async function createCampaign(
     }
 
     // Check if subscriber has campaigns feature
-    const { data: feature } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('feature_flags')
       .select('enabled')
       .eq('subscriber_id', subscriber.id)
       .eq('feature_name', 'campaigns')
       .single()
+
+    const feature = queryResult.data
 
     if (!feature?.enabled) {
       return {
@@ -142,7 +144,7 @@ async function processCampaignCreation(params: CreateCampaignParams): Promise<vo
     })
 
     // Step 3: Create campaign record
-    const { data: campaign, error: campaignError } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('campaigns')
       .insert({
         subscriber_id: params.subscriber.id,
@@ -160,6 +162,9 @@ async function processCampaignCreation(params: CreateCampaignParams): Promise<vo
       .select()
       .single()
 
+    const campaign = queryResult.data
+    const campaignError = queryResult.error
+
     if (campaignError) throw campaignError
 
     // Step 4: Insert all campaign emails
@@ -174,9 +179,11 @@ async function processCampaignCreation(params: CreateCampaignParams): Promise<vo
       scheduled_at: null,
     }))
 
-    const { error: emailsError } = await supabase
+    const emailsQueryResult: any = await (supabase as any)
       .from('campaign_emails')
       .insert(emailRecords)
+
+    const emailsError = emailsQueryResult.error
 
     if (emailsError) throw emailsError
 
@@ -196,7 +203,7 @@ async function processCampaignCreation(params: CreateCampaignParams): Promise<vo
     })
 
     // Step 6: Log campaign creation
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: params.subscriber.id,
       channel: 'sms',
       sender_identifier: params.subscriber.contact_phone,
@@ -209,7 +216,7 @@ async function processCampaignCreation(params: CreateCampaignParams): Promise<vo
 
     // Step 7: Log costs
     // Claude Opus research + generation (estimate ~10k tokens)
-    await supabase.from('cost_events').insert({
+    await (supabase as any).from('cost_events').insert({
       subscriber_id: params.subscriber.id,
       event_type: 'campaign_created',
       skill_name: 'campaign-create',
@@ -486,11 +493,13 @@ export async function approveCampaign(campaignId: string): Promise<void> {
 
   try {
     const now = new Date()
-    const { data: campaign } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('campaigns')
       .select('*, campaign_emails(*)')
       .eq('id', campaignId)
       .single()
+
+    const campaign = queryResult.data
 
     if (!campaign) throw new Error('Campaign not found')
 
@@ -501,7 +510,7 @@ export async function approveCampaign(campaignId: string): Promise<void> {
     for (let i = 0; i < emails.length; i++) {
       const scheduledAt = new Date(now.getTime() + i * intervalMs)
 
-      await supabase
+      await (supabase as any)
         .from('campaign_emails')
         .update({ scheduled_at: scheduledAt.toISOString() })
         .eq('id', emails[i].id)
@@ -510,7 +519,7 @@ export async function approveCampaign(campaignId: string): Promise<void> {
     // Update campaign status
     const firstEmailScheduled = new Date(now.getTime() + intervalMs)
 
-    await supabase
+    await (supabase as any)
       .from('campaigns')
       .update({
         status: 'active',

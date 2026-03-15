@@ -68,11 +68,13 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       }
 
       // Check idempotency
-      const { data: existingEvent } = await supabase
+      const existingEventResult: any = await (supabase as any)
         .from('upgrade_events')
         .select('id')
         .eq('stripe_event_id', event.id)
         .single()
+
+      const existingEvent = existingEventResult.data
 
       if (existingEvent) {
         console.log('Event already processed:', event.id)
@@ -90,11 +92,13 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       }
 
       // Get or create subscriber
-      let { data: subscriber } = await supabase
+      const subscriberResult: any = await (supabase as any)
         .from('subscribers')
         .select('*')
         .eq('email', customerEmail)
         .single()
+
+      const subscriber = subscriberResult.data
 
       if (!subscriber) {
         // This shouldn't happen - subscriber should exist from onboard form
@@ -103,7 +107,7 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       }
 
       // Update subscriber with Stripe details
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({
           stripe_customer_id: customerId,
@@ -114,14 +118,14 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
         .eq('id', subscriber.id)
 
       // Record idempotency
-      await supabase.from('upgrade_events').insert({
+      await (supabase as any).from('upgrade_events').insert({
         subscriber_id: subscriber.id,
         stripe_event_id: event.id,
         event_type: 'checkout.session.completed',
       })
 
       // Activate base features
-      await supabase.from('feature_flags').insert([
+      await (supabase as any).from('feature_flags').insert([
         {
           subscriber_id: subscriber.id,
           feature_name: 'calls',
@@ -171,25 +175,29 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       const subscription = event.data.object as Stripe.Subscription
 
       // Check idempotency
-      const { data: existingEvent } = await supabase
+      const existingEventResult2: any = await (supabase as any)
         .from('upgrade_events')
         .select('id')
         .eq('stripe_event_id', event.id)
         .single()
 
-      if (existingEvent) {
+      const existingEvent2 = existingEventResult2.data
+
+      if (existingEvent2) {
         console.log('Event already processed:', event.id)
         return
       }
 
       // Find subscriber by subscription ID
-      const { data: subscriber } = await supabase
+      const subscriberResult2: any = await (supabase as any)
         .from('subscribers')
         .select('*')
         .eq('stripe_subscription_id', subscription.id)
         .single()
 
-      if (!subscriber) {
+      const subscriber2 = subscriberResult2.data
+
+      if (!subscriber2) {
         console.error('Subscriber not found for subscription:', subscription.id)
         return
       }
@@ -200,26 +208,26 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
         return total + (amount / 100) // Convert cents to dollars
       }, 0)
 
-      const oldMrr = subscriber.current_mrr
+      const oldMrr = subscriber2.current_mrr
 
       // Update subscriber MRR
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({ current_mrr: newMrr })
-        .eq('id', subscriber.id)
+        .eq('id', subscriber2.id)
 
       // Record idempotency
-      await supabase.from('upgrade_events').insert({
-        subscriber_id: subscriber.id,
+      await (supabase as any).from('upgrade_events').insert({
+        subscriber_id: subscriber2.id,
         stripe_event_id: event.id,
         event_type: 'customer.subscription.updated',
       })
 
       // Calculate commission delta
-      if (subscriber.rep_id) {
+      if (subscriber2.rep_id) {
         const eventType = newMrr > oldMrr ? 'upgrade' : 'downgrade'
         await calculateCommission({
-          subscriberId: subscriber.id,
+          subscriberId: subscriber2.id,
           oldMrr,
           newMrr,
           eventType,
@@ -227,7 +235,7 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
         })
       }
 
-      console.log('Subscription updated for subscriber:', subscriber.id)
+      console.log('Subscription updated for subscriber:', subscriber2.id)
       break
     }
 
@@ -235,47 +243,49 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       // Cancellation
       const subscription = event.data.object as Stripe.Subscription
 
-      const { data: subscriber } = await supabase
+      const subscriberResult3: any = await (supabase as any)
         .from('subscribers')
         .select('*')
         .eq('stripe_subscription_id', subscription.id)
         .single()
 
-      if (!subscriber) {
+      const subscriber3 = subscriberResult3.data
+
+      if (!subscriber3) {
         console.error('Subscriber not found for subscription:', subscription.id)
         return
       }
 
       // Update subscriber status
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({
           billing_status: 'cancelled',
           status: 'cancelled',
         })
-        .eq('id', subscriber.id)
+        .eq('id', subscriber3.id)
 
       // Pause all active campaigns
-      await supabase
+      await (supabase as any)
         .from('campaigns')
         .update({ status: 'paused' })
-        .eq('subscriber_id', subscriber.id)
+        .eq('subscriber_id', subscriber3.id)
         .eq('status', 'active')
 
       // Calculate commission loss
-      if (subscriber.rep_id) {
+      if (subscriber3.rep_id) {
         await calculateCommission({
-          subscriberId: subscriber.id,
-          oldMrr: subscriber.current_mrr,
+          subscriberId: subscriber3.id,
+          oldMrr: subscriber3.current_mrr,
           newMrr: 0,
           eventType: 'cancellation',
           stripeEventId: event.id,
         })
 
-        await updateRepSubscriberCount(subscriber.rep_id, -1)
+        await updateRepSubscriberCount(subscriber3.rep_id, -1)
       }
 
-      console.log('Subscription cancelled for subscriber:', subscriber.id)
+      console.log('Subscription cancelled for subscriber:', subscriber3.id)
       break
     }
 
@@ -283,28 +293,30 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       // Payment issue - start grace period
       const invoice = event.data.object as Stripe.Invoice
 
-      const { data: subscriber } = await supabase
+      const subscriberResult4: any = await (supabase as any)
         .from('subscribers')
         .select('*')
         .eq('stripe_customer_id', invoice.customer as string)
         .single()
 
-      if (!subscriber) {
+      const subscriber4 = subscriberResult4.data
+
+      if (!subscriber4) {
         console.error('Subscriber not found for customer:', invoice.customer)
         return
       }
 
       // Update billing status but don't pause bot yet (grace period)
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({
           billing_status: 'past_due',
         })
-        .eq('id', subscriber.id)
+        .eq('id', subscriber4.id)
 
       // TODO: Send SMS to subscriber about payment issue
 
-      console.log('Payment failed for subscriber:', subscriber.id)
+      console.log('Payment failed for subscriber:', subscriber4.id)
       break
     }
 

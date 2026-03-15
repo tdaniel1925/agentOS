@@ -26,12 +26,14 @@ export async function connectEmail(params: ConnectEmailParams): Promise<ConnectR
 
   try {
     // Check if email connect feature is enabled
-    const { data: feature } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('feature_flags')
       .select('enabled')
       .eq('subscriber_id', subscriber.id)
       .eq('feature_name', 'email-connect')
       .single()
+
+    const feature = queryResult.data
 
     if (!feature?.enabled) {
       return {
@@ -105,12 +107,14 @@ export async function checkEmailConnection(subscriberId: string): Promise<{
   const supabase = createServiceClient()
 
   try {
-    const { data: connection } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('email_connections')
       .select('*')
       .eq('subscriber_id', subscriberId)
       .eq('status', 'active')
       .single()
+
+    const connection = queryResult.data
 
     if (!connection) {
       return { connected: false }

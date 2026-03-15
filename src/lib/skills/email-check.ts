@@ -103,7 +103,7 @@ async function processEmailCheck(params: {
     const summary = buildEmailSummary(categories)
 
     // Step 4: Store summary in database
-    await supabase.from('email_summaries').insert({
+    await (supabase as any).from('email_summaries').insert({
       subscriber_id: params.subscriber.id,
       summary_date: new Date().toISOString().split('T')[0],
       total_unread: categories.urgent + categories.client + categories.lead + categories.admin,
@@ -122,7 +122,7 @@ async function processEmailCheck(params: {
     })
 
     // Step 6: Log command execution
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: params.subscriber.id,
       channel: 'sms',
       sender_identifier: params.subscriber.contact_phone,
