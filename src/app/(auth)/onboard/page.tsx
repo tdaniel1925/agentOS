@@ -36,20 +36,19 @@ export default function OnboardPage() {
       if (!user) throw new Error('Not authenticated')
 
       // Update subscriber with intake info
-      const updateData = {
+      const updateData: any = {
         business_name: businessName,
         business_type: businessType,
         phone,
         bot_name: botName,
       }
 
-      // @ts-ignore - Supabase type inference issue with update
       const { data: subscriber, error: updateError } = await supabase
         .from('subscribers')
         .update(updateData)
         .eq('auth_user_id', user.id)
         .select()
-        .single()
+        .single() as any
 
       if (updateError) throw updateError
 
