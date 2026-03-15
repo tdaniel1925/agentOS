@@ -141,16 +141,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .from('demo_calls')
       .insert({
         rep_id: repId,
-        prospect_phone: normalizedPhone,
+        rep_code: null,
+        rep_name: null,
+        prospect_phone: fromPhone,
         prospect_name: null,
-        prospect_email: null,
+        prospect_business_type: null,
         source: 'sms',
-        source_detail: `Inbound SMS: ${messageSid}`,
         status: 'scheduled',
-        scheduled_for: new Date().toISOString(),
         metadata: {
           inbound_message: messageBody,
           inbound_from: fromPhone,
+          inbound_sms_sid: messageSid,
           rep_identifier: repIdentifier
         }
       })
