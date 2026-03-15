@@ -43,7 +43,7 @@ export default function OnboardPage() {
           business_type: businessType,
           phone,
           bot_name: botName,
-        })
+        } as any)
         .eq('auth_user_id', user.id)
         .select()
         .single()
