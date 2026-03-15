@@ -29,11 +29,13 @@ export default function WelcomePage() {
 
     // Poll for subscriber data with bot info
     const interval = setInterval(async () => {
-      const { data } = await supabase
+      const result: any = await (supabase as any)
         .from('subscribers')
         .select('*')
         .eq('auth_user_id', user.id)
         .single()
+
+      const { data } = result
 
       if (data) {
         setSubscriber(data)
