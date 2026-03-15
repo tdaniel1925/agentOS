@@ -1,64 +1,33 @@
 /**
- * Twilio SMS Webhook
+ * Twilio SMS Webhook V2 - Natural Language Demo Requests
  *
- * When someone texts the Twilio number:
- * 1. Parse incoming message
- * 2. Create demo_calls record
- * 3. Trigger VAPI call to prospect
- * 4. Send confirmation SMS
+ * Handles two types of requests:
+ * 1. REP SENDS DEMO: "shoot a msg to jim 281-222-9999. hes on the glass business."
+ * 2. PROSPECT REQUESTS: "DEMO" or "YES"
  *
- * Security: Validates Twilio signature
+ * Features:
+ * - AI-powered natural language parsing
+ * - Rep phone number lookup
+ * - Demo credits system
+ * - Personalized SMS generation
+ * - Industry-specific prompts
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
-
-// Don't create Supabase client at module level - do it inside the function
-// to ensure env vars are available
-
-// Verify Twilio signature for security
-function verifyTwilioSignature(
-  signature: string,
-  url: string,
-  params: Record<string, string>,
-  authToken: string
-): boolean {
-  const sortedParams = Object.keys(params)
-    .sort()
-    .map(key => key + params[key])
-    .join('')
-
-  const data = url + sortedParams
-  const expectedSignature = crypto
-    .createHmac('sha1', authToken)
-    .update(data)
-    .digest('base64')
-
-  return signature === expectedSignature
-}
+import { parseDemoRequest, generateProspectSMS } from '@/lib/ai/demo-parser'
+import { getIndustryPrompt } from '@/lib/ai/industry-prompts'
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('🚀 SMS webhook called')
+    console.log('🚀 SMS webhook called (V2 - NLP enabled)')
 
-    // Load environment variables inside function
+    // Load environment variables
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
     const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
+    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
     const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
-    const VAPI_API_KEY = process.env.VAPI_API_KEY!
-    const VAPI_DEMO_ASSISTANT_ID = process.env.VAPI_DEMO_ASSISTANT_ID!
-    const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID!
-
-    // Debug: Check if env vars are loaded
-    console.log('🔍 Environment check:', {
-      hasSupabaseUrl: !!SUPABASE_URL,
-      hasSupabaseKey: !!SUPABASE_SERVICE_ROLE_KEY,
-      hasVapiKey: !!VAPI_API_KEY,
-      hasTwilioSid: !!TWILIO_ACCOUNT_SID
-    })
 
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -70,8 +39,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       params[key] = value.toString()
     })
 
-    console.log('📦 Parsed params:', params)
-
     const {
       From: fromPhone,
       To: toPhone,
@@ -79,174 +46,435 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       MessageSid: messageSid
     } = params
 
-    // Verify Twilio signature
-    const twilioSignature = request.headers.get('x-twilio-signature') || ''
-    const url = request.url
-
-    // TEMPORARILY DISABLED FOR DEBUGGING
-    // if (!verifyTwilioSignature(twilioSignature, url, params, TWILIO_AUTH_TOKEN)) {
-    //   console.error('Invalid Twilio signature')
-    //   return new NextResponse('Forbidden', { status: 403 })
-    // }
-
     console.log(`📨 Incoming SMS from ${fromPhone}: "${messageBody}"`)
 
-    // Normalize phone number (remove +1, spaces, dashes)
-    const normalizedPhone = fromPhone.replace(/[\s\-\+]/g, '').slice(-10)
+    // =============================================
+    // CHECK 1: Is sender an Apex rep?
+    // =============================================
 
-    // Check for opt-out keywords
-    const optOutKeywords = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
-    if (optOutKeywords.includes(messageBody.trim().toUpperCase())) {
-      // Send opt-out confirmation
-      await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+    const repLookup: any = await (supabase as any)
+      .from('agentos_reps')
+      .select('*')
+      .eq('phone', fromPhone)
+      .eq('active', true)
+      .single()
+
+    const isRep = !!repLookup.data
+
+    // =============================================
+    // PATH A: REP IS SENDING A DEMO REQUEST
+    // =============================================
+
+    if (isRep) {
+      const rep = repLookup.data
+
+      console.log(`✅ Rep detected: ${rep.name} (${rep.apex_rep_code})`)
+
+      // Parse request with AI
+      const parsed = await parseDemoRequest(messageBody)
+
+      if (parsed.intent !== 'send_demo') {
+        await sendSMS(fromPhone, "I didn't quite understand that. Try: 'send demo to John 555-123-4567, he's in real estate'")
+        return twilioResponse()
+      }
+
+      if (!parsed.prospect_phone) {
+        await sendSMS(fromPhone, "I need a phone number. Try: 'send demo to John 555-123-4567'")
+        return twilioResponse()
+      }
+
+      // Check demo credits
+      if (rep.demo_credits_remaining <= 0) {
+        if (rep.business_center_tier === 'free') {
+          await sendSMS(fromPhone,
+            `You've used all your free demos! Upgrade to Business Center ($39/month) for 50 demos/month. Or have prospects text DEMO to ${TWILIO_PHONE_NUMBER}`
+          )
+          return twilioResponse()
+        } else {
+          await sendSMS(fromPhone,
+            `You've used all ${rep.business_center_tier === 'basic' ? '50' : '999'} demos this month. Resets soon! For now, have prospects text DEMO to ${TWILIO_PHONE_NUMBER}`
+          )
+          return twilioResponse()
+        }
+      }
+
+      // Generate personalized SMS
+      const prospectSMS = await generateProspectSMS({
+        prospect_name: parsed.prospect_name,
+        business_type: parsed.business_type,
+        rep_name: rep.name
+      })
+
+      // Get industry prompt for when they say YES
+      const industryPrompt = getIndustryPrompt(
+        parsed.business_type,
+        parsed.prospect_name,
+        rep.name
+      )
+
+      // Create pending_demo_requests record
+      const pendingResult: any = await (supabase as any)
+        .from('pending_demo_requests')
+        .insert({
+          rep_id: rep.id,
+          rep_name: rep.name,
+          prospect_name: parsed.prospect_name,
+          prospect_phone: parsed.prospect_phone,
+          prospect_business_type: parsed.business_type,
+          sms_sent: prospectSMS,
+          industry_prompt: industryPrompt,
+          status: 'awaiting_reply',
+          original_message: messageBody,
+          parsed_data: parsed
+        })
+        .select()
+        .single()
+
+      if (pendingResult.error) {
+        throw pendingResult.error
+      }
+
+      // Deduct demo credit
+      await (supabase as any)
+        .from('agentos_reps')
+        .update({
+          demo_credits_remaining: rep.demo_credits_remaining - 1,
+          last_demo_sent_at: new Date().toISOString()
+        })
+        .eq('id', rep.id)
+
+      // Log activity
+      await (supabase as any)
+        .from('demo_activity_log')
+        .insert({
+          rep_id: rep.id,
+          pending_request_id: pendingResult.data.id,
+          activity_type: 'demo_requested',
+          metadata: {
+            prospect_phone: parsed.prospect_phone,
+            prospect_name: parsed.prospect_name,
+            business_type: parsed.business_type
+          }
+        })
+
+      // Send personalized SMS to prospect
+      await sendSMS(parsed.prospect_phone, prospectSMS)
+
+      // Log SMS sent
+      await (supabase as any)
+        .from('demo_activity_log')
+        .insert({
+          rep_id: rep.id,
+          pending_request_id: pendingResult.data.id,
+          activity_type: 'sms_sent_to_prospect',
+          metadata: {
+            sms_content: prospectSMS
+          }
+        })
+
+      // Confirm to rep
+      const prospectNameDisplay = parsed.prospect_name || 'prospect'
+      const creditsRemaining = rep.demo_credits_remaining - 1
+      await sendSMS(fromPhone,
+        `✅ Demo request sent to ${prospectNameDisplay}! They'll reply YES when ready. ${creditsRemaining} demos remaining this month.`
+      )
+
+      return twilioResponse()
+    }
+
+    // =============================================
+    // PATH B: PROSPECT IS REPLYING
+    // =============================================
+
+    // Check if this is a YES reply to a pending demo
+    if (messageBody.trim().toUpperCase() === 'YES') {
+      const pendingResult: any = await (supabase as any)
+        .from('pending_demo_requests')
+        .select('*')
+        .eq('prospect_phone', fromPhone)
+        .eq('status', 'awaiting_reply')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (pendingResult.data) {
+        const pending = pendingResult.data
+
+        // Update status
+        await (supabase as any)
+          .from('pending_demo_requests')
+          .update({
+            status: 'confirmed',
+            confirmed_at: new Date().toISOString()
+          })
+          .eq('id', pending.id)
+
+        // Log confirmation
+        await (supabase as any)
+          .from('demo_activity_log')
+          .insert({
+            rep_id: pending.rep_id,
+            pending_request_id: pending.id,
+            activity_type: 'prospect_confirmed',
+            metadata: {}
+          })
+
+        // Create demo_calls record
+        const demoCallResult: any = await (supabase as any)
+          .from('demo_calls')
+          .insert({
+            rep_id: pending.rep_id,
+            rep_code: null, // Will be populated by rep lookup
+            rep_name: pending.rep_name,
+            prospect_phone: fromPhone,
+            prospect_name: pending.prospect_name,
+            prospect_business_type: pending.prospect_business_type,
+            source: 'rep_sms',
+            status: 'scheduled',
+            metadata: {
+              pending_request_id: pending.id,
+              original_rep_message: pending.original_message
+            }
+          })
+          .select()
+          .single()
+
+        if (demoCallResult.error) {
+          throw demoCallResult.error
+        }
+
+        // Trigger VAPI call with industry-specific prompt
+        const VAPI_API_KEY = process.env.VAPI_API_KEY!
+        const VAPI_DEMO_ASSISTANT_ID = process.env.VAPI_DEMO_ASSISTANT_ID!
+        const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID!
+
+        const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${VAPI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumberId: VAPI_PHONE_NUMBER_ID,
+            customer: {
+              number: fromPhone
+            },
+            assistantOverrides: {
+              model: {
+                messages: [{
+                  role: 'system',
+                  content: pending.industry_prompt
+                }]
+              }
+            },
+            metadata: {
+              demo_call_id: demoCallResult.data.id,
+              source: 'rep_sms_confirmed',
+              rep_id: pending.rep_id,
+              business_type: pending.prospect_business_type
+            }
+          })
+        })
+
+        if (!vapiResponse.ok) {
+          const errorText = await vapiResponse.text()
+          console.error('❌ VAPI call failed:', errorText)
+          throw new Error(`VAPI call failed: ${errorText}`)
+        }
+
+        const vapiCall = await vapiResponse.json()
+
+        // Update demo_calls with VAPI ID
+        await (supabase as any)
+          .from('demo_calls')
+          .update({
+            status: 'in_progress',
+            vapi_call_id: vapiCall.id,
+            call_started_at: new Date().toISOString()
+          })
+          .eq('id', demoCallResult.data.id)
+
+        // Log call started
+        await (supabase as any)
+          .from('demo_activity_log')
+          .insert({
+            rep_id: pending.rep_id,
+            demo_call_id: demoCallResult.data.id,
+            pending_request_id: pending.id,
+            activity_type: 'demo_call_started',
+            metadata: {
+              vapi_call_id: vapiCall.id
+            }
+          })
+
+        // Notify rep
+        const repResult: any = await (supabase as any)
+          .from('agentos_reps')
+          .select('phone')
+          .eq('id', pending.rep_id)
+          .single()
+
+        if (repResult.data?.phone) {
+          const prospectNameDisplay = pending.prospect_name || 'prospect'
+          await sendSMS(repResult.data.phone,
+            `✅ ${prospectNameDisplay} confirmed! Jordan is calling them now.`
+          )
+        }
+
+        // Confirm to prospect
+        await sendSMS(fromPhone, "Great! You'll receive a call from Jordan in just a moment.")
+
+        return twilioResponse()
+      }
+    }
+
+    // =============================================
+    // PATH C: PROSPECT REQUESTING DEMO DIRECTLY
+    // =============================================
+
+    const keyword = messageBody.trim().toUpperCase()
+
+    if (keyword === 'DEMO' || keyword.startsWith('DEMO ')) {
+      // Parse optional rep code: "DEMO MJ4829"
+      const words = messageBody.trim().split(/\s+/)
+      const repIdentifier = words.slice(1).join(' ') || null
+
+      // Look up rep if identifier provided
+      let repId: string | null = null
+      if (repIdentifier) {
+        const repResult: any = await (supabase as any)
+          .from('agentos_reps')
+          .select('id')
+          .or(`apex_rep_code.ilike.%${repIdentifier}%,name.ilike.%${repIdentifier}%`)
+          .single()
+
+        if (repResult.data) repId = repResult.data.id
+      }
+
+      // Create demo_calls record
+      const demoCallResult: any = await (supabase as any)
+        .from('demo_calls')
+        .insert({
+          rep_id: repId,
+          rep_code: null,
+          rep_name: null,
+          prospect_phone: fromPhone,
+          prospect_name: null,
+          prospect_business_type: null,
+          source: 'sms',
+          status: 'scheduled',
+          metadata: {
+            inbound_message: messageBody,
+            inbound_sms_sid: messageSid,
+            rep_identifier: repIdentifier
+          }
+        })
+        .select()
+        .single()
+
+      if (demoCallResult.error) {
+        throw demoCallResult.error
+      }
+
+      // Trigger VAPI call (standard timed demo)
+      const VAPI_API_KEY = process.env.VAPI_API_KEY!
+      const VAPI_DEMO_ASSISTANT_ID = process.env.VAPI_DEMO_ASSISTANT_ID!
+      const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID!
+
+      const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
         method: 'POST',
         headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64'),
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Authorization': `Bearer ${VAPI_API_KEY}`,
+          'Content-Type': 'application/json'
         },
-        body: new URLSearchParams({
-          To: fromPhone,
-          From: TWILIO_PHONE_NUMBER,
-          Body: 'You have been unsubscribed from AgentOS demo calls. Reply START to re-subscribe.'
+        body: JSON.stringify({
+          assistantId: VAPI_DEMO_ASSISTANT_ID,
+          phoneNumberId: VAPI_PHONE_NUMBER_ID,
+          customer: {
+            number: fromPhone
+          },
+          metadata: {
+            demo_call_id: demoCallResult.data.id,
+            source: 'sms_inbound',
+            rep_id: repId
+          }
         })
       })
 
-      return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
-        headers: { 'Content-Type': 'text/xml' }
-      })
+      if (!vapiResponse.ok) {
+        const errorText = await vapiResponse.text()
+        console.error('❌ VAPI call failed:', errorText)
+        throw new Error(`VAPI call failed: ${errorText}`)
+      }
+
+      const vapiCall = await vapiResponse.json()
+
+      // Update demo_calls
+      await (supabase as any)
+        .from('demo_calls')
+        .update({
+          status: 'in_progress',
+          vapi_call_id: vapiCall.id,
+          call_started_at: new Date().toISOString()
+        })
+        .eq('id', demoCallResult.data.id)
+
+      // Send confirmation SMS
+      const confirmationMessage = repId
+        ? `Thanks! Jordan is calling you now to show you how AgentOS works. This demo is courtesy of your agent.`
+        : `Thanks! Jordan is calling you now to show you how AgentOS works for just $97/month. Get ready!`
+
+      await sendSMS(fromPhone, confirmationMessage)
+
+      return twilioResponse()
     }
 
-    // Parse rep code from message (optional)
-    // Format: "DEMO" or "DEMO REP123" or "DEMO JOHN"
-    const words = messageBody.trim().split(/\s+/)
-    const keyword = words[0].toUpperCase()
-    const repIdentifier = words.slice(1).join(' ') || null
+    // =============================================
+    // FALLBACK: Unknown message
+    // =============================================
 
-    // Look up rep if identifier provided
-    let repId: string | null = null
-    if (repIdentifier) {
-      const repResult: any = await (supabase as any)
-        .from('subscribers')
-        .select('id')
-        .or(`email.ilike.%${repIdentifier}%,full_name.ilike.%${repIdentifier}%`)
-        .single()
+    await sendSMS(fromPhone,
+      `Text DEMO for a quick demo call, or if you're an Apex rep, describe who to send a demo to (e.g., "send demo to John 555-123-4567, insurance agent")`
+    )
 
-      const rep = repResult.data
-      if (rep) repId = rep.id
-    }
-
-    // Create demo_calls record
-    console.log('💾 Inserting demo_calls record...')
-    const demoCallResult: any = await (supabase as any)
-      .from('demo_calls')
-      .insert({
-        rep_id: repId,
-        rep_code: null,
-        rep_name: null,
-        prospect_phone: fromPhone,
-        prospect_name: null,
-        prospect_business_type: null,
-        source: 'sms',
-        status: 'scheduled',
-        metadata: {
-          inbound_message: messageBody,
-          inbound_from: fromPhone,
-          inbound_sms_sid: messageSid,
-          rep_identifier: repIdentifier
-        }
-      })
-      .select()
-      .single()
-
-    const demoCall = demoCallResult.data
-    const demoError = demoCallResult.error
-
-    if (demoError) {
-      console.error('❌ Error creating demo_calls record:', demoError)
-      throw demoError
-    }
-
-    console.log(`✅ Created demo_calls record: ${demoCall.id}`)
-
-    // Trigger VAPI call
-    console.log('📞 Triggering VAPI call...')
-    const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${VAPI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        assistantId: VAPI_DEMO_ASSISTANT_ID,
-        phoneNumberId: VAPI_PHONE_NUMBER_ID,
-        customer: {
-          number: fromPhone
-        },
-        metadata: {
-          demo_call_id: demoCall.id,
-          source: 'sms_inbound',
-          rep_id: repId
-        }
-      })
-    })
-
-    if (!vapiResponse.ok) {
-      const errorText = await vapiResponse.text()
-      console.error('❌ VAPI call failed:', errorText)
-      throw new Error(`VAPI call failed: ${errorText}`)
-    }
-
-    const vapiCall = await vapiResponse.json()
-    console.log(`✅ VAPI call triggered: ${vapiCall.id}`)
-
-    // Update demo_calls with VAPI call ID
-    await (supabase as any)
-      .from('demo_calls')
-      .update({
-        status: 'in_progress',
-        vapi_call_id: vapiCall.id,
-        call_started_at: new Date().toISOString()
-      })
-      .eq('id', demoCall.id)
-
-    // Send confirmation SMS
-    const confirmationMessage = repId
-      ? `Thanks! Jordan is calling you now to show you how AgentOS works. This demo is courtesy of your agent.`
-      : `Thanks! Jordan is calling you now to show you how AgentOS works for just $97/month. Get ready!`
-
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        To: fromPhone,
-        From: TWILIO_PHONE_NUMBER,
-        Body: confirmationMessage
-      })
-    })
-
-    // Return TwiML response (empty - we already sent the confirmation)
-    return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
-      headers: { 'Content-Type': 'text/xml' }
-    })
+    return twilioResponse()
 
   } catch (error: unknown) {
     console.error('❌ ERROR processing Twilio SMS webhook:', error)
-    console.error('Error type:', typeof error)
-    console.error('Error constructor:', error?.constructor?.name)
-    console.error('Error stringified:', JSON.stringify(error, null, 2))
+    const errorMessage = error instanceof Error ? error.message : String(error)
 
-    const errorMessage = error instanceof Error ? error.message : (typeof error === 'string' ? error : JSON.stringify(error))
-    const errorStack = error instanceof Error ? error.stack : null
-
-    console.error('Error details:', { errorMessage, errorStack, fullError: error })
-
-    // Return error TwiML
-    return new NextResponse(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Error: ${errorMessage}</Message></Response>`,
-      { headers: { 'Content-Type': 'text/xml' }, status: 500 }
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
     )
   }
+}
+
+// =============================================
+// HELPER FUNCTIONS
+// =============================================
+
+async function sendSMS(to: string, body: string): Promise<void> {
+  const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
+  const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
+  const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
+
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({
+      To: to,
+      From: TWILIO_PHONE_NUMBER,
+      Body: body
+    })
+  })
+}
+
+function twilioResponse(): NextResponse {
+  return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
+    headers: { 'Content-Type': 'text/xml' }
+  })
 }
