@@ -6,14 +6,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default function WelcomePage() {
-  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [subscriber, setSubscriber] = useState<any>(null)
   const [progress, setProgress] = useState(0)
