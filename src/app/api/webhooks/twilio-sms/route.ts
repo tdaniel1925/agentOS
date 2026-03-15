@@ -47,12 +47,16 @@ function verifyTwilioSignature(
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    console.log('🚀 SMS webhook called')
+
     // Parse form data from Twilio
     const formData = await request.formData()
     const params: Record<string, string> = {}
     formData.forEach((value, key) => {
       params[key] = value.toString()
     })
+
+    console.log('📦 Parsed params:', params)
 
     const {
       From: fromPhone,
@@ -118,6 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Create demo_calls record
+    console.log('💾 Inserting demo_calls record...')
     const demoCallResult: any = await (supabase as any)
       .from('demo_calls')
       .insert({
@@ -142,13 +147,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const demoError = demoCallResult.error
 
     if (demoError) {
-      console.error('Error creating demo_calls record:', demoError)
+      console.error('❌ Error creating demo_calls record:', demoError)
       throw demoError
     }
 
     console.log(`✅ Created demo_calls record: ${demoCall.id}`)
 
     // Trigger VAPI call
+    console.log('📞 Triggering VAPI call...')
     const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
       method: 'POST',
       headers: {
@@ -171,12 +177,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!vapiResponse.ok) {
       const errorText = await vapiResponse.text()
-      console.error('VAPI call failed:', errorText)
+      console.error('❌ VAPI call failed:', errorText)
       throw new Error(`VAPI call failed: ${errorText}`)
     }
 
     const vapiCall = await vapiResponse.json()
-    console.log(`📞 VAPI call triggered: ${vapiCall.id}`)
+    console.log(`✅ VAPI call triggered: ${vapiCall.id}`)
 
     // Update demo_calls with VAPI call ID
     await (supabase as any)
@@ -212,17 +218,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     })
 
   } catch (error: unknown) {
-    console.error('Error processing Twilio SMS webhook:', error)
+    console.error('❌ ERROR processing Twilio SMS webhook:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : null
 
-    // Log to error_log table
-    await (supabase as any).from('error_log').insert({
-      error_type: 'twilio_sms_webhook',
-      error_message: errorMessage,
-      stack_trace: error instanceof Error ? error.stack : null,
-      context: { request_url: request.url }
-    })
+    console.error('Error details:', { errorMessage, errorStack })
 
     // Return error TwiML
     return new NextResponse(
