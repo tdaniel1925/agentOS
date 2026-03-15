@@ -16,49 +16,61 @@ export default async function ActivityLogPage() {
     redirect('/login')
   }
 
-  // Get subscriber data
-  const { data: subscriber } = await supabase
+  // Get subscriber data - using untyped query to bypass TypeScript inference issue
+  const subscriberResult: any = await (supabase as any)
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', user.id)
     .single()
+
+  const subscriber = subscriberResult.data
 
   if (!subscriber) {
     redirect('/onboard')
   }
 
   // Get all commands (paginated - last 100)
-  const { data: commands } = await supabase
+  const commandsResult: any = await (supabase as any)
     .from('commands_log')
     .select('*')
     .eq('subscriber_id', subscriber.id)
     .order('created_at', { ascending: false })
     .limit(100)
+
+  const commands = commandsResult.data
 
   // Get all calls (paginated - last 100)
-  const { data: calls } = await supabase
+  const callsResult: any = await (supabase as any)
     .from('call_summaries')
     .select('*')
     .eq('subscriber_id', subscriber.id)
     .order('created_at', { ascending: false })
     .limit(100)
 
+  const calls = callsResult.data
+
   // Get stats
-  const { count: totalCommands } = await supabase
+  const totalCommandsResult: any = await (supabase as any)
     .from('commands_log')
     .select('*', { count: 'exact', head: true })
     .eq('subscriber_id', subscriber.id)
 
-  const { count: totalCalls } = await supabase
+  const totalCommands = totalCommandsResult.count
+
+  const totalCallsResult: any = await (supabase as any)
     .from('call_summaries')
     .select('*', { count: 'exact', head: true })
     .eq('subscriber_id', subscriber.id)
 
-  const { count: successfulCommands } = await supabase
+  const totalCalls = totalCallsResult.count
+
+  const successfulCommandsResult: any = await (supabase as any)
     .from('commands_log')
     .select('*', { count: 'exact', head: true })
     .eq('subscriber_id', subscriber.id)
     .eq('success', true)
+
+  const successfulCommands = successfulCommandsResult.count
 
   const successRate = totalCommands ? Math.round((successfulCommands || 0) / totalCommands * 100) : 0
 
