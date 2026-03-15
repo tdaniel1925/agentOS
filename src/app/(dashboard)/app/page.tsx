@@ -16,12 +16,14 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Get subscriber data
-  const { data: subscriber } = await supabase
+  // Get subscriber data - using untyped query to bypass TypeScript inference issue
+  const subscriberResult: any = await (supabase as any)
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', user.id)
     .single()
+
+  const subscriber = subscriberResult.data
 
   if (!subscriber) {
     redirect('/onboard')
@@ -30,32 +32,40 @@ export default async function DashboardPage() {
   // Get today's stats
   const today = new Date().toISOString().split('T')[0]
 
-  const { count: callsToday } = await supabase
+  const callsTodayResult: any = await (supabase as any)
     .from('call_summaries')
     .select('*', { count: 'exact', head: true })
     .eq('subscriber_id', subscriber.id)
     .gte('created_at', `${today}T00:00:00`)
 
-  const { count: commandsToday } = await supabase
+  const callsToday = callsTodayResult.count
+
+  const commandsTodayResult: any = await (supabase as any)
     .from('commands_log')
     .select('*', { count: 'exact', head: true })
     .eq('subscriber_id', subscriber.id)
     .gte('created_at', `${today}T00:00:00`)
 
+  const commandsToday = commandsTodayResult.count
+
   // Get recent activity
-  const { data: recentActivity } = await supabase
+  const recentActivityResult: any = await (supabase as any)
     .from('commands_log')
     .select('*')
     .eq('subscriber_id', subscriber.id)
     .order('created_at', { ascending: false })
     .limit(5)
 
+  const recentActivity = recentActivityResult.data
+
   // Get active features
-  const { data: features } = await supabase
+  const featuresResult: any = await (supabase as any)
     .from('feature_flags')
     .select('*')
     .eq('subscriber_id', subscriber.id)
     .eq('enabled', true)
+
+  const features = featuresResult.data
 
   const now = new Date()
   const hour = now.getHours()
@@ -139,7 +149,7 @@ export default async function DashboardPage() {
           </div>
           {recentActivity && recentActivity.length > 0 ? (
             <div className="space-y-3">
-              {recentActivity.map((activity) => (
+              {recentActivity.map((activity: any) => (
                 <div
                   key={activity.id}
                   className="flex items-center justify-between py-2 border-b last:border-b-0"
@@ -176,7 +186,7 @@ export default async function DashboardPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             {features && features.length > 0 ? (
-              features.map((feature) => (
+              features.map((feature: any) => (
                 <div
                   key={feature.id}
                   className="border border-gray-200 rounded-lg p-4"

@@ -17,12 +17,14 @@ export default async function RepDashboardPage() {
     redirect('/login')
   }
 
-  // Get rep record from agentos_reps
-  const { data: rep } = await supabase
+  // Get rep record from agentos_reps - using untyped query
+  const repResult: any = await (supabase as any)
     .from('agentos_reps')
     .select('*')
     .eq('email', user.email)
     .single()
+
+  const rep = repResult.data
 
   if (!rep) {
     return (
@@ -60,8 +62,8 @@ export default async function RepDashboardPage() {
     )
   }
 
-  // Get rep's subscribers
-  const { data: subscribers } = await supabase
+  // Get rep's subscribers - using untyped query
+  const subscribersResult: any = await (supabase as any)
     .from('subscribers')
     .select(`
       id,
@@ -77,8 +79,10 @@ export default async function RepDashboardPage() {
     .eq('rep_code', rep.apex_rep_code)
     .order('created_at', { ascending: false })
 
-  const activeSubscribers = subscribers?.filter(s => s.status === 'active') || []
-  const totalMRR = activeSubscribers.reduce((sum, s) => sum + (s.current_mrr || 0), 0)
+  const subscribers = subscribersResult.data
+
+  const activeSubscribers = subscribers?.filter((s: any) => s.status === 'active') || []
+  const totalMRR = activeSubscribers.reduce((sum: number, s: any) => sum + (s.current_mrr || 0), 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,7 +183,7 @@ export default async function RepDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {subscribers.map((sub) => {
+                {subscribers.map((sub: any) => {
                   const activeSkills = sub.feature_flags
                     ?.filter((f: any) => f.enabled)
                     ?.map((f: any) => f.feature_name) || []
