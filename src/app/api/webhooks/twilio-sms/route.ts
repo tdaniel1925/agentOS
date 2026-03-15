@@ -14,16 +14,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
-const VAPI_API_KEY = process.env.VAPI_API_KEY!
-const VAPI_DEMO_ASSISTANT_ID = process.env.VAPI_DEMO_ASSISTANT_ID!
-const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID!
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+// Don't create Supabase client at module level - do it inside the function
+// to ensure env vars are available
 
 // Verify Twilio signature for security
 function verifyTwilioSignature(
@@ -48,6 +40,27 @@ function verifyTwilioSignature(
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🚀 SMS webhook called')
+
+    // Load environment variables inside function
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
+    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
+    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
+    const VAPI_API_KEY = process.env.VAPI_API_KEY!
+    const VAPI_DEMO_ASSISTANT_ID = process.env.VAPI_DEMO_ASSISTANT_ID!
+    const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID!
+
+    // Debug: Check if env vars are loaded
+    console.log('🔍 Environment check:', {
+      hasSupabaseUrl: !!SUPABASE_URL,
+      hasSupabaseKey: !!SUPABASE_SERVICE_ROLE_KEY,
+      hasVapiKey: !!VAPI_API_KEY,
+      hasTwilioSid: !!TWILIO_ACCOUNT_SID
+    })
+
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // Parse form data from Twilio
     const formData = await request.formData()
