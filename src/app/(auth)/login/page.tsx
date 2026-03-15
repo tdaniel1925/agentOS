@@ -45,7 +45,7 @@ export default function LoginPage() {
       // Redirect based on subscriber status
       if (!subscriber) {
         router.push('/onboard')
-      } else if (subscriber.status === 'pending') {
+      } else if ((subscriber as { status: string }).status === 'pending') {
         router.push('/onboard')
       } else {
         router.push('/app')
