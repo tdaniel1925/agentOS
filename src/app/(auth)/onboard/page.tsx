@@ -6,13 +6,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getStripeClient } from '@/lib/stripe/client'
 import { STRIPE_PRICES } from '@/lib/stripe/products'
 
 export default function OnboardPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,15 +59,14 @@ export default function OnboardPage() {
         }),
       })
 
-      const { sessionId } = await response.json()
+      const { url } = await response.json()
 
-      // Redirect to Stripe
-      const stripe = await getStripeClient()
-      const { error: stripeError } = await stripe!.redirectToCheckout({
-        sessionId,
-      })
-
-      if (stripeError) throw stripeError
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url
+      } else {
+        throw new Error('Failed to create checkout session')
+      }
 
     } catch (err: any) {
       setError(err.message || 'Onboarding failed')
