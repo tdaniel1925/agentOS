@@ -36,20 +36,20 @@ export default function OnboardPage() {
       if (!user) throw new Error('Not authenticated')
 
       // Update subscriber with intake info
-      const updateData: any = {
-        business_name: businessName,
-        business_type: businessType,
-        phone,
-        bot_name: botName,
-      }
-
-      const { data: subscriber, error: updateError } = await supabase
+      // Using untyped query to bypass TypeScript inference issue
+      const updateResult: any = await (supabase as any)
         .from('subscribers')
-        .update(updateData)
+        .update({
+          business_name: businessName,
+          business_type: businessType,
+          phone,
+          bot_name: botName,
+        })
         .eq('auth_user_id', user.id)
         .select()
-        .single() as any
+        .single()
 
+      const { data: subscriber, error: updateError } = updateResult
       if (updateError) throw updateError
 
       // Create Stripe checkout session
