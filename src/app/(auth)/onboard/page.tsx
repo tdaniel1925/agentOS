@@ -9,6 +9,8 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { STRIPE_PRICES } from '@/lib/stripe/products'
 
+export const dynamic = 'force-dynamic'
+
 export default function OnboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

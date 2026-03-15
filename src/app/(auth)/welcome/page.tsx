@@ -10,6 +10,8 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function WelcomePage() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
