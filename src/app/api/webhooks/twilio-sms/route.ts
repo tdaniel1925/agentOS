@@ -232,15 +232,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   } catch (error: unknown) {
     console.error('❌ ERROR processing Twilio SMS webhook:', error)
+    console.error('Error type:', typeof error)
+    console.error('Error constructor:', error?.constructor?.name)
+    console.error('Error stringified:', JSON.stringify(error, null, 2))
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage = error instanceof Error ? error.message : (typeof error === 'string' ? error : JSON.stringify(error))
     const errorStack = error instanceof Error ? error.stack : null
 
-    console.error('Error details:', { errorMessage, errorStack })
+    console.error('Error details:', { errorMessage, errorStack, fullError: error })
 
     // Return error TwiML
     return new NextResponse(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Sorry, something went wrong. Please try again later.</Message></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Error: ${errorMessage}</Message></Response>`,
       { headers: { 'Content-Type': 'text/xml' }, status: 500 }
     )
   }
