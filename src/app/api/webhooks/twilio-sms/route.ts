@@ -21,7 +21,8 @@ import crypto from 'crypto'
 function verifyTwilioSignature(
   signature: string,
   url: string,
-  params: Record<string, string>
+  params: Record<string, string>,
+  authToken: string
 ): boolean {
   const sortedParams = Object.keys(params)
     .sort()
@@ -30,7 +31,7 @@ function verifyTwilioSignature(
 
   const data = url + sortedParams
   const expectedSignature = crypto
-    .createHmac('sha1', TWILIO_AUTH_TOKEN)
+    .createHmac('sha1', authToken)
     .update(data)
     .digest('base64')
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const url = request.url
 
     // TEMPORARILY DISABLED FOR DEBUGGING
-    // if (!verifyTwilioSignature(twilioSignature, url, params)) {
+    // if (!verifyTwilioSignature(twilioSignature, url, params, TWILIO_AUTH_TOKEN)) {
     //   console.error('Invalid Twilio signature')
     //   return new NextResponse('Forbidden', { status: 403 })
     // }
