@@ -63,8 +63,8 @@ export async function GET(
       business_type: subscriber.business_type,
       control_phone: subscriber.control_phone,
       stripe_subscription_status: subscriber.stripe_subscription_status,
-      vapi_assistant_id: phoneNumber?.vapi_assistant_id || null,
-      vapi_phone_number: phoneNumber?.phone_number || null,
+      vapi_assistant_id: (subscriber as any).vapi_assistant_id || phoneNumber?.vapi_assistant_id || null,
+      vapi_phone_number: (subscriber as any).vapi_phone_number || phoneNumber?.phone_number || null,
       phone_number_status: phoneNumber?.status || null,
       phone_number_assigned_at: phoneNumber?.assigned_at || null,
       created_at: subscriber.created_at
