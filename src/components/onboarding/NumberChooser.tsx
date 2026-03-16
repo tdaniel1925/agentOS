@@ -21,37 +21,39 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
   const [error, setError] = useState<string | null>(null)
   const [currentAreaCode, setCurrentAreaCode] = useState<string>('415')
 
-  // Load numbers on mount
+  // Load numbers on mount - try multiple area codes until we find some
   useEffect(() => {
-    loadNumbers('415')
+    loadAvailableNumbers()
   }, [])
 
-  async function loadNumbers(areaCode: string): Promise<void> {
+  async function loadAvailableNumbers(): Promise<void> {
     setIsLoading(true)
     setError(null)
-    setCurrentAreaCode(areaCode)
     setSelectedNumber(null)
 
-    try {
-      const res = await fetch(`/api/phone-numbers/search?areaCode=${areaCode}&limit=20`)
-      const data = await res.json()
+    // Try area codes in order until we find numbers
+    const areaCodesToTry = ['415', '212', '310', '312', '713', '305', '404', '214', '602', '480']
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to load numbers')
-      }
+    for (const areaCode of areaCodesToTry) {
+      try {
+        const res = await fetch(`/api/phone-numbers/search?areaCode=${areaCode}&limit=20`)
+        const data = await res.json()
 
-      if (data.numbers && data.numbers.length > 0) {
-        setNumbers(data.numbers)
-      } else {
-        setNumbers([])
-        setError(`No numbers available in area code ${areaCode}. Try another area code.`)
+        if (res.ok && data.numbers && data.numbers.length > 0) {
+          setNumbers(data.numbers)
+          setCurrentAreaCode(areaCode)
+          setIsLoading(false)
+          return
+        }
+      } catch (err) {
+        console.error(`Failed to load from ${areaCode}:`, err)
+        // Continue to next area code
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load numbers')
-      setNumbers([])
-    } finally {
-      setIsLoading(false)
     }
+
+    // If we get here, no numbers found in any area code
+    setError('No numbers available right now. Please try again in a few minutes.')
+    setIsLoading(false)
   }
 
   async function handleProvision(): Promise<void> {
@@ -104,38 +106,12 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-2">Choose Your Business Phone Number</h1>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-sm mb-3">
             This is your <strong>customer-facing number</strong>. Customers will call this number and Jordan (your AI) will answer.
           </p>
-        </div>
-
-        {/* Area Code Selector */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Area Code</label>
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { code: '212', city: 'NYC' },
-              { code: '310', city: 'LA' },
-              { code: '312', city: 'Chicago' },
-              { code: '415', city: 'SF' },
-              { code: '713', city: 'Houston' },
-              { code: '305', city: 'Miami' },
-              { code: '404', city: 'Atlanta' },
-              { code: '214', city: 'Dallas' }
-            ].map(({ code, city }) => (
-              <button
-                key={code}
-                onClick={() => loadNumbers(code)}
-                disabled={isLoading}
-                className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
-                  currentAreaCode === code
-                    ? 'border-[#1B3A7D] bg-blue-50 text-[#1B3A7D]'
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                ({code}) {city}
-              </button>
-            ))}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-gray-700">
+            <strong>💡 Pro Tip:</strong> Area code doesn't matter - you can forward calls from your existing business number to this one.
+            Just pick any number you like!
           </div>
         </div>
 
@@ -158,7 +134,7 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         {!isLoading && numbers.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              Available Numbers ({numbers.length})
+              Available Numbers - Area Code ({currentAreaCode})
             </h2>
 
             <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
