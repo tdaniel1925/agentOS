@@ -42,7 +42,7 @@ interface SubscriberData {
   phone_number_status: string | null
 }
 
-export default function OnboardingPage({ params }: { params: Promise<{ id: string }> }): JSX.Element {
+export default function OnboardingPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
 
