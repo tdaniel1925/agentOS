@@ -89,9 +89,16 @@ function generateOAuthUrl(provider: string, subscriberId: string): string {
     // Microsoft OAuth2 URL
     const clientId = process.env.MICROSOFT_CLIENT_ID
     const redirectUri = `${appUrl}/api/auth/microsoft/callback`
-    const scope = 'https://graph.microsoft.com/Mail.Read'
+    const scopes = [
+      'https://graph.microsoft.com/Mail.Read',
+      'https://graph.microsoft.com/Mail.Send',
+      'https://graph.microsoft.com/Calendars.Read',
+      'https://graph.microsoft.com/Calendars.ReadWrite',
+      'https://graph.microsoft.com/User.Read',
+      'offline_access'
+    ]
 
-    return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}&state=${state}&response_mode=query`
+    return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes.join(' '))}&state=${state}&response_mode=query`
   }
 }
 
