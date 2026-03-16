@@ -110,6 +110,10 @@ export async function checkEmailConnection(subscriberId: string): Promise<{
   provider?: string
   emailAddress?: string
   status?: string
+  id?: string
+  encrypted_access_token?: string
+  encrypted_refresh_token?: string
+  token_expires_at?: string
 }> {
   const supabase = createServiceClient()
 
@@ -132,6 +136,10 @@ export async function checkEmailConnection(subscriberId: string): Promise<{
       provider: connection.provider,
       emailAddress: connection.email_address,
       status: connection.status,
+      id: connection.id,
+      encrypted_access_token: connection.encrypted_access_token,
+      encrypted_refresh_token: connection.encrypted_refresh_token,
+      token_expires_at: connection.token_expires_at,
     }
   } catch (error) {
     return { connected: false }
