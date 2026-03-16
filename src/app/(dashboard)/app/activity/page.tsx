@@ -77,53 +77,87 @@ export default async function ActivityLogPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               <Link
                 href="/app"
-                className="text-[#1B3A7D] hover:text-[#0F2347]"
+                className="flex items-center gap-2 text-[#1B3A7D] hover:text-[#0F2347] font-medium transition-colors group"
               >
-                ← Back to Dashboard
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 group-hover:-translate-x-1 transition-transform">
+                  <path d="m12 19-7-7 7-7"></path>
+                  <path d="M19 12H5"></path>
+                </svg>
+                Back
               </Link>
-              <h1 className="text-2xl font-bold text-[#1B3A7D]">
-                Activity Log
-              </h1>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#1B3A7D] to-[#2A4A8D] rounded-lg flex items-center justify-center shadow-md">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+                    <path d="M3 3v18h18"></path>
+                    <path d="m19 9-5 5-4-4-3 3"></path>
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-bold text-[#1B3A7D]">
+                  Activity Log
+                </h1>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{subscriber.name}</span>
+            <div className="flex items-center gap-4">
+              <div className="hidden md:block text-right">
+                <div className="text-sm font-medium text-gray-900">{subscriber.name}</div>
+                <div className="text-xs text-gray-500">{subscriber.business_name}</div>
+              </div>
+              <Link
+                href="/api/auth/signout"
+                className="text-sm text-gray-600 hover:text-[#C7181F] font-medium transition-colors"
+              >
+                Sign Out
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Summary */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Total Commands"
             value={totalCommands || 0}
-            icon="⚡"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path>
+              </svg>
+            }
           />
           <StatCard
             title="Total Calls"
             value={totalCalls || 0}
-            icon="📞"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path>
+              </svg>
+            }
           />
           <StatCard
             title="Success Rate"
             value={`${successRate}%`}
-            icon="✅"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            }
             valueColor={successRate >= 95 ? 'text-green-600' : successRate >= 80 ? 'text-yellow-600' : 'text-red-600'}
           />
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="border-b border-gray-200 bg-gray-50">
+            <nav className="flex -mb-px px-6">
               <TabButton label="Commands" active={true} />
               <TabButton label="Calls" active={false} />
             </nav>
@@ -131,60 +165,79 @@ export default async function ActivityLogPage() {
 
           {/* Commands Table */}
           <div className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Recent Commands
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900">
+                Recent Commands
+              </h2>
+              <span className="text-sm text-gray-500">
+                Last 100 commands
+              </span>
+            </div>
 
             {commands && commands.length > 0 ? (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto -mx-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Time
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Channel
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Command
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Skill
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">
                         Duration
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-100">
                     {commands.map((command: any) => (
-                      <tr key={command.id} className="hover:bg-gray-50">
+                      <tr key={command.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(command.created_at).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <ChannelBadge channel={command.channel} />
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {command.raw_message?.substring(0, 50) || '—'}
-                          {command.raw_message && command.raw_message.length > 50 ? '...' : ''}
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                          {command.raw_message || '—'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {command.skill_triggered || '—'}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {command.skill_triggered ? (
+                            <span className="px-3 py-1 bg-[#1B3A7D]/10 text-[#1B3A7D] text-xs font-medium rounded-full">
+                              {command.skill_triggered}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-400">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {command.success ? (
-                            <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
-                              Success
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m9 12 2 2 4-4"></path>
+                              </svg>
+                              <span className="text-xs font-medium text-green-700">Success</span>
+                            </div>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">
-                              Failed
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-red-600">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m15 9-6 6"></path>
+                                <path d="m9 9 6 6"></path>
+                              </svg>
+                              <span className="text-xs font-medium text-red-700">Failed</span>
+                            </div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -196,9 +249,14 @@ export default async function ActivityLogPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No commands yet</p>
-                <p className="text-sm text-gray-400 mt-2">
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-gray-400">
+                    <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path>
+                  </svg>
+                </div>
+                <p className="text-gray-600 font-medium mb-1">No commands yet</p>
+                <p className="text-sm text-gray-500">
                   Commands will appear here when {subscriber.bot_name} executes actions
                 </p>
               </div>
@@ -207,23 +265,40 @@ export default async function ActivityLogPage() {
 
           {/* Calls Section (hidden for now, can be activated with tabs) */}
           <div className="p-6 hidden">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Recent Calls
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900">
+                Recent Calls
+              </h2>
+              <span className="text-sm text-gray-500">
+                Last 100 calls
+              </span>
+            </div>
 
             {calls && calls.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {calls.map((call: any) => (
                   <div
                     key={call.id}
-                    className="border border-gray-200 rounded-lg p-4"
+                    className="border border-gray-200 rounded-xl p-5 hover:border-[#1B3A7D]/30 hover:shadow-md transition-all"
                   >
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-gray-900">
-                            {call.call_type === 'inbound' ? '📞 Inbound' : '📱 Outbound'}
-                          </span>
+                        <div className="flex items-center gap-2 mb-1">
+                          {call.call_type === 'inbound' ? (
+                            <div className="flex items-center gap-1.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600">
+                                <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path>
+                              </svg>
+                              <span className="font-medium text-gray-900">Inbound</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-blue-600">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                              </svg>
+                              <span className="font-medium text-gray-900">Outbound</span>
+                            </div>
+                          )}
                           <span className="text-sm text-gray-600">
                             from {call.caller_number}
                           </span>
@@ -232,21 +307,26 @@ export default async function ActivityLogPage() {
                           {new Date(call.created_at).toLocaleString()}
                         </p>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 px-3 py-1 bg-gray-100 rounded-lg">
                         {Math.floor((call.duration_seconds || 0) / 60)}:{String((call.duration_seconds || 0) % 60).padStart(2, '0')}
                       </span>
                     </div>
 
                     {call.summary && (
-                      <p className="text-sm text-gray-700 mt-2">
+                      <p className="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                         {call.summary}
                       </p>
                     )}
 
                     {call.action_required && (
-                      <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-2">
+                      <div className="mt-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-3 flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5">
+                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path>
+                          <path d="M12 9v4"></path>
+                          <path d="M12 17h.01"></path>
+                        </svg>
                         <p className="text-xs font-medium text-yellow-800">
-                          ⚠️ Action Required
+                          Action Required
                         </p>
                       </div>
                     )}
@@ -254,8 +334,16 @@ export default async function ActivityLogPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No calls yet</p>
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-gray-400">
+                    <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path>
+                  </svg>
+                </div>
+                <p className="text-gray-600 font-medium mb-1">No calls yet</p>
+                <p className="text-sm text-gray-500">
+                  Call history will appear here
+                </p>
               </div>
             )}
           </div>
@@ -268,16 +356,18 @@ export default async function ActivityLogPage() {
 function StatCard({ title, value, icon, valueColor = 'text-[#1B3A7D]' }: {
   title: string
   value: string | number
-  icon: string
+  icon: React.ReactNode
   valueColor?: string
 }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-600">{title}</span>
-        <span className="text-2xl">{icon}</span>
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-bold text-gray-600 uppercase tracking-wide">{title}</span>
+        <div className="w-12 h-12 bg-[#1B3A7D]/10 rounded-xl flex items-center justify-center text-[#1B3A7D]">
+          {icon}
+        </div>
       </div>
-      <div className={`text-3xl font-bold ${valueColor}`}>
+      <div className={`text-4xl font-bold ${valueColor}`}>
         {value}
       </div>
     </div>
@@ -287,7 +377,7 @@ function StatCard({ title, value, icon, valueColor = 'text-[#1B3A7D]' }: {
 function TabButton({ label, active }: { label: string; active: boolean }) {
   return (
     <button
-      className={`px-6 py-3 text-sm font-medium border-b-2 ${
+      className={`px-6 py-4 text-sm font-bold border-b-2 transition-all ${
         active
           ? 'border-[#1B3A7D] text-[#1B3A7D]'
           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -299,18 +389,58 @@ function TabButton({ label, active }: { label: string; active: boolean }) {
 }
 
 function ChannelBadge({ channel }: { channel: string | null }) {
-  const colors: Record<string, string> = {
-    sms: 'bg-blue-100 text-blue-800',
-    email: 'bg-purple-100 text-purple-800',
-    phone: 'bg-green-100 text-green-800',
-    discord: 'bg-indigo-100 text-indigo-800',
-    app: 'bg-gray-100 text-gray-800',
+  const channelConfig: Record<string, { color: string; icon: React.ReactNode }> = {
+    sms: {
+      color: 'bg-blue-100 text-blue-800',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      ),
+    },
+    email: {
+      color: 'bg-purple-100 text-purple-800',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+          <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+        </svg>
+      ),
+    },
+    phone: {
+      color: 'bg-green-100 text-green-800',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+          <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path>
+        </svg>
+      ),
+    },
+    discord: {
+      color: 'bg-indigo-100 text-indigo-800',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="19" cy="12" r="1"></circle>
+          <circle cx="5" cy="12" r="1"></circle>
+        </svg>
+      ),
+    },
+    app: {
+      color: 'bg-gray-100 text-gray-800',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+          <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+          <path d="M9 3v18"></path>
+        </svg>
+      ),
+    },
   }
 
-  const color = channel ? colors[channel] || 'bg-gray-100 text-gray-800' : 'bg-gray-100 text-gray-800'
+  const config = channel ? channelConfig[channel] || channelConfig.app : channelConfig.app
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded ${color}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${config.color}`}>
+      {config.icon}
       {channel || 'unknown'}
     </span>
   )
