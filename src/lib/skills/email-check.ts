@@ -220,8 +220,13 @@ async function fetchEmails(connection: any): Promise<any[]> {
 
         console.log('📧 [Fetch] Calling Microsoft token refresh...')
 
-        // Refresh the token
-        const newTokens = await refreshMicrosoftToken(refreshToken)
+        // Refresh the token with 10 second timeout
+        const newTokens = await Promise.race([
+          refreshMicrosoftToken(refreshToken),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Token refresh timeout after 10 seconds')), 10000)
+          )
+        ])
 
         // Update access token
         accessToken = newTokens.access_token
@@ -248,8 +253,13 @@ async function fetchEmails(connection: any): Promise<any[]> {
 
       console.log('📧 [Fetch] Calling Microsoft Graph API...')
 
-      // Fetch unread emails from Microsoft Graph
-      const emails = await getMicrosoftUnreadEmails(accessToken, 50)
+      // Fetch unread emails from Microsoft Graph with 15 second timeout
+      const emails = await Promise.race([
+        getMicrosoftUnreadEmails(accessToken, 50),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Microsoft Graph API timeout after 15 seconds')), 15000)
+        )
+      ])
 
       console.log(`✅ [Fetch] Fetched ${emails.length} unread emails from Outlook`)
 

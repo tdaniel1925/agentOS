@@ -99,12 +99,16 @@ export async function refreshMicrosoftToken(refreshToken: string): Promise<{
   refresh_token: string
   expires_in: number
 }> {
+  console.log('🔄 [MS Token] Starting refresh...')
+
   const params = new URLSearchParams({
     client_id: MICROSOFT_CLIENT_ID,
     client_secret: MICROSOFT_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type: 'refresh_token'
   })
+
+  console.log('🔄 [MS Token] Calling Microsoft OAuth endpoint...')
 
   const response = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
     method: 'POST',
@@ -114,12 +118,18 @@ export async function refreshMicrosoftToken(refreshToken: string): Promise<{
     body: params.toString()
   })
 
+  console.log('🔄 [MS Token] Response status:', response.status)
+
   if (!response.ok) {
     const error = await response.text()
-    throw new Error(`Microsoft token refresh failed: ${error}`)
+    console.error('❌ [MS Token] Refresh failed:', error)
+    throw new Error(`Microsoft token refresh failed (${response.status}): ${error}`)
   }
 
-  return await response.json()
+  const data = await response.json()
+  console.log('✅ [MS Token] Refresh successful')
+
+  return data
 }
 
 // =============================================
