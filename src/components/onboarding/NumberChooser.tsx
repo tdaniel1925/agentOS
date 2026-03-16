@@ -1,16 +1,11 @@
 'use client'
 
 /**
- * Number Chooser Component
- *
- * Allows subscriber to:
- * 1. Enter ZIP code
- * 2. Search for available numbers
- * 3. Select a number
- * 4. Provision it (charges $15)
+ * Number Chooser - Simple and Clean
+ * Shows available numbers, user picks one, done.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AvailableNumber } from '@/lib/phone-numbers/provision'
 
 interface NumberChooserProps {
@@ -19,41 +14,43 @@ interface NumberChooserProps {
 }
 
 export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) {
-  const [zipCode, setZipCode] = useState('')
   const [numbers, setNumbers] = useState<AvailableNumber[]>([])
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [isProvisioning, setIsProvisioning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [currentAreaCode, setCurrentAreaCode] = useState<string>('415')
 
-  async function handleSearch(): Promise<void> {
-    if (zipCode.length !== 5) {
-      setError('Please enter a valid 5-digit ZIP code')
-      return
-    }
+  // Load numbers on mount
+  useEffect(() => {
+    loadNumbers('415')
+  }, [])
 
-    setIsSearching(true)
+  async function loadNumbers(areaCode: string): Promise<void> {
+    setIsLoading(true)
     setError(null)
+    setCurrentAreaCode(areaCode)
+    setSelectedNumber(null)
 
     try {
-      const res = await fetch(`/api/phone-numbers/search?zipCode=${zipCode}`)
+      const res = await fetch(`/api/phone-numbers/search?areaCode=${areaCode}&limit=20`)
       const data = await res.json()
 
       if (!res.ok) {
-        // If no numbers in this ZIP, show helpful message but don't fail
-        if (data.error && data.error.includes('No available numbers')) {
-          setNumbers([]) // Empty array will show the "no numbers" UI
-          setError(null) // Clear error to show custom message
-        } else {
-          throw new Error(data.error || 'Failed to search numbers')
-        }
+        throw new Error(data.error || 'Failed to load numbers')
+      }
+
+      if (data.numbers && data.numbers.length > 0) {
+        setNumbers(data.numbers)
       } else {
-        setNumbers(data.numbers || [])
+        setNumbers([])
+        setError(`No numbers available in area code ${areaCode}. Try another area code.`)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed')
+      setError(err instanceof Error ? err.message : 'Failed to load numbers')
+      setNumbers([])
     } finally {
-      setIsSearching(false)
+      setIsLoading(false)
     }
   }
 
@@ -68,9 +65,9 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subscriberId: subscriberId,
+          subscriberId,
           phoneNumber: selectedNumber,
-          areaCode: numbers[0]?.areaCode
+          areaCode: currentAreaCode
         })
       })
 
@@ -83,7 +80,6 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         throw new Error(data.error || 'Provisioning failed')
       }
 
-      // Success!
       onComplete()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Provisioning failed')
@@ -103,153 +99,66 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full">
-        {/* Step 1: ZIP Code Input */}
-        {numbers.length === 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h1 className="text-2xl font-bold mb-2">Get Your Business Number</h1>
-            <p className="text-gray-600 mb-6">
-              Choose a local phone number for your business. We'll find available numbers in your area.
-            </p>
+      <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your ZIP Code
-              </label>
-              <input
-                type="text"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && zipCode.length === 5) {
-                    handleSearch()
-                  }
-                }}
-                placeholder="94102"
-                maxLength={5}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-[#1B3A7D]"
-              />
-            </div>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-2">Choose Your AI Assistant Number</h1>
+          <p className="text-gray-600 text-sm">
+            This number is for <strong>you</strong> to text commands to Jordan. Your customers won't see it.
+          </p>
+        </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-800">
-                {error}
-              </div>
-            )}
+        {/* Area Code Selector */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Area Code</label>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { code: '212', city: 'NYC' },
+              { code: '310', city: 'LA' },
+              { code: '312', city: 'Chicago' },
+              { code: '415', city: 'SF' },
+              { code: '713', city: 'Houston' },
+              { code: '305', city: 'Miami' },
+              { code: '404', city: 'Atlanta' },
+              { code: '214', city: 'Dallas' }
+            ].map(({ code, city }) => (
+              <button
+                key={code}
+                onClick={() => loadNumbers(code)}
+                disabled={isLoading}
+                className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  currentAreaCode === code
+                    ? 'border-[#1B3A7D] bg-blue-50 text-[#1B3A7D]'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                ({code}) {city}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <button
-              onClick={handleSearch}
-              disabled={zipCode.length !== 5 || isSearching}
-              className="w-full bg-[#1B3A7D] text-white py-3 rounded-lg font-semibold disabled:opacity-50 hover:bg-[#152d63] transition-colors"
-            >
-              {isSearching ? 'Searching...' : 'Search Available Numbers'}
-            </button>
-
-            <div className="mt-4 text-sm text-gray-600">
-              💡 One-time setup fee: $15 • Includes 200 minutes and 500 SMS/month
-            </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B3A7D]"></div>
+            <p className="mt-2 text-gray-600">Loading available numbers...</p>
           </div>
         )}
 
-        {/* Step 2a: No Numbers Found - Show Alternatives */}
-        {!isSearching && numbers.length === 0 && zipCode.length === 5 && !error && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <button
-              onClick={() => {
-                setZipCode('')
-                setNumbers([])
-                setSelectedNumber(null)
-              }}
-              className="text-[#1B3A7D] text-sm mb-4 hover:underline"
-            >
-              ← Try Different ZIP Code
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="text-4xl mb-3">📍</div>
-              <h2 className="text-xl font-bold mb-2">
-                No Numbers Available in ZIP {zipCode}
-              </h2>
-              <p className="text-gray-600">
-                Don't worry! We have plenty of numbers in nearby area codes.
-              </p>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-2">
-                <span className="text-xl">💡</span>
-                <div className="text-sm text-gray-700">
-                  <p className="font-semibold mb-1">What is this number for?</p>
-                  <p>
-                    This is your <strong>personal AI assistant number</strong> - only you will use it
-                    to text commands to Jordan (your AI). Your customers will never see this number.
-                  </p>
-                  <p className="mt-2">
-                    Need a customer-facing number? We can help you setup call forwarding from
-                    your existing business number after onboarding.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-3">Popular Area Codes:</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { code: '212', city: 'New York City' },
-                  { code: '310', city: 'Los Angeles' },
-                  { code: '312', city: 'Chicago' },
-                  { code: '415', city: 'San Francisco' },
-                  { code: '713', city: 'Houston' },
-                  { code: '305', city: 'Miami' }
-                ].map(({ code, city }) => (
-                  <button
-                    key={code}
-                    onClick={async () => {
-                      setIsSearching(true)
-                      try {
-                        const res = await fetch(`/api/phone-numbers/search?areaCode=${code}`)
-                        const data = await res.json()
-                        if (res.ok && data.numbers) {
-                          setNumbers(data.numbers)
-                        }
-                      } catch (err) {
-                        console.error('Search failed:', err)
-                      } finally {
-                        setIsSearching(false)
-                      }
-                    }}
-                    className="bg-white border border-gray-300 rounded-lg p-3 text-left hover:border-[#1B3A7D] hover:bg-blue-50 transition-colors"
-                  >
-                    <div className="font-semibold">({code})</div>
-                    <div className="text-xs text-gray-600">{city}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center">
-              Can't find what you need? <a href="mailto:support@theapexbots.com" className="text-[#1B3A7D] underline">Contact Support</a>
-            </p>
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800 mb-4">
+            {error}
           </div>
         )}
 
-        {/* Step 2b: Number Selection */}
-        {numbers.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <button
-              onClick={() => {
-                setNumbers([])
-                setSelectedNumber(null)
-                setError(null)
-              }}
-              className="text-[#1B3A7D] text-sm mb-4 hover:underline"
-            >
-              ← Change ZIP Code
-            </button>
-
-            <h2 className="text-xl font-bold mb-4">
-              Choose Your Number (Area Code {numbers[0]?.areaCode})
+        {/* Number List */}
+        {!isLoading && numbers.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-3">
+              Available Numbers ({numbers.length})
             </h2>
 
             <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
@@ -288,22 +197,16 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
               ))}
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-800">
-                {error}
-              </div>
-            )}
-
             <button
               onClick={handleProvision}
               disabled={!selectedNumber || isProvisioning}
               className="w-full bg-[#1B3A7D] text-white py-3 rounded-lg font-semibold disabled:opacity-50 hover:bg-[#152d63] transition-colors"
             >
-              {isProvisioning ? 'Provisioning...' : 'Continue'}
+              {isProvisioning ? 'Provisioning...' : 'Get This Number ($15)'}
             </button>
 
-            <div className="mt-4 text-sm text-gray-600 text-center">
-              💳 $15 setup fee will be charged to your card on file
+            <div className="mt-3 text-xs text-gray-600 text-center">
+              💳 One-time $15 setup fee • Includes 200 minutes + 500 SMS/month
             </div>
           </div>
         )}
