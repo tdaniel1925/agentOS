@@ -55,43 +55,32 @@ export async function searchAvailableNumbers(
   limit: number = 10
 ): Promise<AvailableNumber[]> {
   try {
-    console.log(`🔍 Searching for numbers in area code ${areaCode}`)
+    console.log(`🔍 Loading available numbers (limit: ${limit})`)
     console.log(`   Twilio SID: ${process.env.TWILIO_ACCOUNT_SID?.substring(0, 10)}...`)
     console.log(`   Twilio Token set: ${!!process.env.TWILIO_AUTH_TOKEN}`)
 
-    // Try local first, then toll-free if no results
-    let availableNumbers = await twilioClient
+    // Just get available numbers without any search parameters
+    // Match how Twilio console works - show what's available and let user filter
+    const availableNumbers = await twilioClient
       .availablePhoneNumbers('US')
       .local
       .list({
-        areaCode: parseInt(areaCode, 10),
         limit: limit
       })
 
-    // If no local numbers, try without area code restriction
-    if (availableNumbers.length === 0) {
-      console.log(`   No numbers in ${areaCode}, trying any area code...`)
-      availableNumbers = await twilioClient
-        .availablePhoneNumbers('US')
-        .local
-        .list({
-          limit: limit
-        })
-    }
-
-    console.log(`✅ Found ${availableNumbers.length} numbers in area code ${areaCode}`)
+    console.log(`✅ Found ${availableNumbers.length} available numbers`)
 
     return availableNumbers.map(num => ({
       phoneNumber: num.phoneNumber,
       friendlyName: num.friendlyName,
       locality: num.locality || 'Unknown',
-      region: num.region || areaCode.substring(0, 2),
-      areaCode: areaCode
+      region: num.region || num.region || 'US',
+      areaCode: num.phoneNumber.substring(2, 5) // Extract area code from number
     }))
   } catch (error) {
-    console.error('❌ Error searching for numbers:', error)
+    console.error('❌ Error loading available numbers:', error)
     console.error('   Error details:', JSON.stringify(error, null, 2))
-    throw new Error(`Failed to search for numbers in area code ${areaCode}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(`Failed to load available numbers: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
