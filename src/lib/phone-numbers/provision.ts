@@ -63,7 +63,7 @@ export async function searchAvailableNumbers(
       .availablePhoneNumbers('US')
       .local
       .list({
-        areaCode: parseInt(areaCode, 10),
+        areaCode: areaCode,
         voiceEnabled: true,
         smsEnabled: true,
         limit: limit
