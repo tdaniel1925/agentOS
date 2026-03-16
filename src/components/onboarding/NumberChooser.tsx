@@ -40,10 +40,16 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to search numbers')
+        // If no numbers in this ZIP, show helpful message but don't fail
+        if (data.error && data.error.includes('No available numbers')) {
+          setNumbers([]) // Empty array will show the "no numbers" UI
+          setError(null) // Clear error to show custom message
+        } else {
+          throw new Error(data.error || 'Failed to search numbers')
+        }
+      } else {
+        setNumbers(data.numbers || [])
       }
-
-      setNumbers(data.numbers)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed')
     } finally {
@@ -145,7 +151,90 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
           </div>
         )}
 
-        {/* Step 2: Number Selection */}
+        {/* Step 2a: No Numbers Found - Show Alternatives */}
+        {!isSearching && numbers.length === 0 && zipCode.length === 5 && !error && (
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <button
+              onClick={() => {
+                setZipCode('')
+                setNumbers([])
+                setSelectedNumber(null)
+              }}
+              className="text-[#1B3A7D] text-sm mb-4 hover:underline"
+            >
+              ← Try Different ZIP Code
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-3">📍</div>
+              <h2 className="text-xl font-bold mb-2">
+                No Numbers Available in ZIP {zipCode}
+              </h2>
+              <p className="text-gray-600">
+                Don't worry! We have plenty of numbers in nearby area codes.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-2">
+                <span className="text-xl">💡</span>
+                <div className="text-sm text-gray-700">
+                  <p className="font-semibold mb-1">What is this number for?</p>
+                  <p>
+                    This is your <strong>personal AI assistant number</strong> - only you will use it
+                    to text commands to Jordan (your AI). Your customers will never see this number.
+                  </p>
+                  <p className="mt-2">
+                    Need a customer-facing number? We can help you setup call forwarding from
+                    your existing business number after onboarding.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold mb-3">Popular Area Codes:</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { code: '212', city: 'New York City' },
+                  { code: '310', city: 'Los Angeles' },
+                  { code: '312', city: 'Chicago' },
+                  { code: '415', city: 'San Francisco' },
+                  { code: '713', city: 'Houston' },
+                  { code: '305', city: 'Miami' }
+                ].map(({ code, city }) => (
+                  <button
+                    key={code}
+                    onClick={async () => {
+                      setIsSearching(true)
+                      try {
+                        const res = await fetch(`/api/phone-numbers/search?areaCode=${code}`)
+                        const data = await res.json()
+                        if (res.ok && data.numbers) {
+                          setNumbers(data.numbers)
+                        }
+                      } catch (err) {
+                        console.error('Search failed:', err)
+                      } finally {
+                        setIsSearching(false)
+                      }
+                    }}
+                    className="bg-white border border-gray-300 rounded-lg p-3 text-left hover:border-[#1B3A7D] hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="font-semibold">({code})</div>
+                    <div className="text-xs text-gray-600">{city}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 text-center">
+              Can't find what you need? <a href="mailto:support@theapexbots.com" className="text-[#1B3A7D] underline">Contact Support</a>
+            </p>
+          </div>
+        )}
+
+        {/* Step 2b: Number Selection */}
         {numbers.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-8">
             <button
