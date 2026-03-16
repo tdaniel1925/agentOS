@@ -86,27 +86,53 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000))
 
-    // Store in database (upsert in case reconnecting)
-    const insertResult: any = await (supabase as any)
+    // Check if connection already exists
+    const existingResult: any = await (supabase as any)
       .from('email_connections')
-      .upsert({
-        subscriber_id: subscriberId,
-        provider: 'outlook',
-        email_address: tokens.email,
-        encrypted_access_token: encryptedAccessToken,
-        encrypted_refresh_token: encryptedRefreshToken,
-        token_expires_at: expiresAt.toISOString(),
-        scopes: ['Mail.Read', 'Mail.Send', 'Calendars.Read', 'Calendars.ReadWrite', 'User.Read'],
-        status: 'active'
-      }, {
-        onConflict: 'subscriber_id'
-      })
-      .select()
+      .select('id')
+      .eq('subscriber_id', subscriberId)
       .single()
 
-    if (insertResult.error) {
-      console.error('Database insert error:', insertResult.error)
-      throw insertResult.error
+    let connectionResult: any
+
+    if (existingResult.data) {
+      // Update existing connection
+      connectionResult = await (supabase as any)
+        .from('email_connections')
+        .update({
+          provider: 'outlook',
+          email_address: tokens.email,
+          encrypted_access_token: encryptedAccessToken,
+          encrypted_refresh_token: encryptedRefreshToken,
+          token_expires_at: expiresAt.toISOString(),
+          scopes: ['Mail.Read', 'Mail.Send', 'Calendars.Read', 'Calendars.ReadWrite', 'User.Read'],
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('subscriber_id', subscriberId)
+        .select()
+        .single()
+    } else {
+      // Insert new connection
+      connectionResult = await (supabase as any)
+        .from('email_connections')
+        .insert({
+          subscriber_id: subscriberId,
+          provider: 'outlook',
+          email_address: tokens.email,
+          encrypted_access_token: encryptedAccessToken,
+          encrypted_refresh_token: encryptedRefreshToken,
+          token_expires_at: expiresAt.toISOString(),
+          scopes: ['Mail.Read', 'Mail.Send', 'Calendars.Read', 'Calendars.ReadWrite', 'User.Read'],
+          status: 'active'
+        })
+        .select()
+        .single()
+    }
+
+    if (connectionResult.error) {
+      console.error('Database operation error:', connectionResult.error)
+      throw connectionResult.error
     }
 
     // Send confirmation SMS to subscriber
