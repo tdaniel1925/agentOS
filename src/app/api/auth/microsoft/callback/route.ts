@@ -68,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Decode state to get subscriber info
     const stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf8'))
-    const { token } = stateData
+    const { subscriberId } = stateData
 
     // Exchange code for tokens
     const tokens = await exchangeMicrosoftCode(code)
@@ -79,13 +79,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // In production, look up subscriber_id from token
-    // For now, we'll need to modify this to properly identify the subscriber
-    // This is a simplified version - you'll need to implement proper token->subscriber mapping
-
-    // TODO: Get subscriber_id from token lookup
-    // For testing, you can hardcode a subscriber_id or implement a proper token verification system
-
     // Encrypt tokens
     const encryptedAccessToken = encryptToken(tokens.access_token)
     const encryptedRefreshToken = encryptToken(tokens.refresh_token)
@@ -93,30 +86,43 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000))
 
-    // Store in database
-    // Note: This needs subscriber_id - implement token->subscriber lookup first
-    /*
+    // Store in database (upsert in case reconnecting)
     const insertResult: any = await (supabase as any)
       .from('email_connections')
-      .insert({
-        subscriber_id: subscriberId, // TODO: Get from token
+      .upsert({
+        subscriber_id: subscriberId,
         provider: 'outlook',
         email_address: tokens.email,
         encrypted_access_token: encryptedAccessToken,
         encrypted_refresh_token: encryptedRefreshToken,
         token_expires_at: expiresAt.toISOString(),
-        scopes: ['Mail.Read', 'Mail.Send', 'User.Read'],
+        scopes: ['Mail.Read', 'Mail.Send', 'Calendars.Read', 'Calendars.ReadWrite', 'User.Read'],
         status: 'active'
+      }, {
+        onConflict: 'subscriber_id'
       })
       .select()
       .single()
 
     if (insertResult.error) {
+      console.error('Database insert error:', insertResult.error)
       throw insertResult.error
     }
-    */
 
-    // TODO: Send confirmation SMS to subscriber
+    // Send confirmation SMS to subscriber
+    const subscriberResult: any = await (supabase as any)
+      .from('subscribers')
+      .select('control_phone, bot_name')
+      .eq('id', subscriberId)
+      .single()
+
+    if (subscriberResult.data?.control_phone) {
+      const { sendSMS } = await import('@/lib/twilio/client')
+      await sendSMS({
+        to: subscriberResult.data.control_phone,
+        body: `✅ ${tokens.email} connected! ${subscriberResult.data.bot_name || 'Jordan'} can now check your inbox and calendar.`
+      })
+    }
 
     // Show success page
     return new NextResponse(
