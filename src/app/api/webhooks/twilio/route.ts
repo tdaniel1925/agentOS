@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
 
     // 3. Identify subscriber by phone number
     const supabase = createServiceClient()
+    console.log('[Twilio Webhook] Looking up subscriber by phone:', From)
+
     const subscriberResult: any = await (supabase as any)
       .from('subscribers')
       .select('*')
@@ -50,8 +52,15 @@ export async function POST(req: NextRequest) {
     const subscriber = subscriberResult.data
     const subError = subscriberResult.error
 
+    console.log('[Twilio Webhook] Subscriber lookup result:', {
+      found: !!subscriber,
+      subscriber_id: subscriber?.id,
+      error: subError?.message
+    })
+
     if (subError || !subscriber) {
       // Unknown number - ask to identify
+      console.log('[Twilio Webhook] Unknown number, sending identification prompt')
       await sendSMS({
         to: From,
         body: "I don't recognize this number. What's the email address on your account?",
