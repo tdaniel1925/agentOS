@@ -92,6 +92,14 @@ Return JSON only:`
 
     const intent = JSON.parse(jsonMatch[0]) as SMSIntent
 
+    // DEBUG: Log parsed intent
+    console.log('[SMS Parser]', {
+      raw_message: message,
+      parsed_intent: intent.intent,
+      confidence: intent.confidence,
+      active_features: context.features?.map((f: any) => f.feature_name) || []
+    })
+
     // Validate intent structure
     if (!intent.intent || typeof intent.confidence !== 'number') {
       throw new Error('Invalid intent structure')

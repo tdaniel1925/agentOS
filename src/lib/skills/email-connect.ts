@@ -48,7 +48,7 @@ export async function connectEmail(params: ConnectEmailParams): Promise<ConnectR
 
     // Send link via SMS
     await sendSMS({
-      to: subscriber.contact_phone,
+      to: subscriber.control_phone,
       body: `Connect your ${provider === 'gmail' ? 'Gmail' : 'Outlook'} account:\n\n${oauthUrl}\n\nLink expires in 15 minutes.`,
     })
 

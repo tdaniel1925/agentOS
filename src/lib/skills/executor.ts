@@ -641,7 +641,9 @@ async function handleEmailCommand(intent: SMSIntent, context: any, subscriber: a
 
   // CONNECT_EMAIL - OAuth flow
   if (intent.intent === 'CONNECT_EMAIL') {
-    const provider = (intent.entities.provider || 'gmail').toLowerCase()
+    console.log('[Executor] CONNECT_EMAIL handler triggered', { subscriber_id: subscriber.id })
+
+    const provider = (intent.entities.provider || 'outlook').toLowerCase()
 
     if (provider !== 'gmail' && provider !== 'outlook') {
       return {
@@ -655,6 +657,7 @@ async function handleEmailCommand(intent: SMSIntent, context: any, subscriber: a
       subscriber: subscriber,
     })
 
+    console.log('[Executor] CONNECT_EMAIL result', result)
     return result
   }
 
