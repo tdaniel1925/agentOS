@@ -27,36 +27,31 @@ export default function WelcomePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Poll for subscriber data with bot info
-    const interval = setInterval(async () => {
-      const result: any = await (supabase as any)
-        .from('subscribers')
-        .select('*')
-        .eq('auth_user_id', user.id)
-        .single()
+    // Check subscriber status
+    const result: any = await (supabase as any)
+      .from('subscribers')
+      .select('*, subscriber_phone_numbers(*)')
+      .eq('auth_user_id', user.id)
+      .single()
 
-      const { data } = result
+    const sub = result.data
 
-      if (data) {
-        setSubscriber(data)
+    if (!sub) return
 
-        // Update progress based on what's complete
-        let currentProgress = 0
-        if (data.stripe_customer_id) currentProgress = 25
-        if (data.vapi_assistant_id) currentProgress = 50
-        if (data.vapi_phone_number) currentProgress = 75
-        if (data.status === 'active') currentProgress = 100
+    // If no active phone number, redirect to select-phone
+    const activePhone = sub.subscriber_phone_numbers?.find(
+      (p: any) => p.status === 'active'
+    )
 
-        setProgress(currentProgress)
+    if (!activePhone) {
+      window.location.href = '/select-phone'
+      return
+    }
 
-        if (currentProgress === 100) {
-          setLoading(false)
-          clearInterval(interval)
-        }
-      }
-    }, 2000) // Poll every 2 seconds
-
-    return () => clearInterval(interval)
+    // If we have a phone number, show welcome page
+    setSubscriber(sub)
+    setProgress(100)
+    setLoading(false)
   }
 
   if (loading || !subscriber) {
@@ -185,7 +180,9 @@ export default function WelcomePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-2">Your New Business Number</h3>
-                  <p className="text-3xl font-bold mb-3">{subscriber.vapi_phone_number}</p>
+                  <p className="text-3xl font-bold mb-3">
+                    {subscriber.subscriber_phone_numbers?.[0]?.phone_number || subscriber.vapi_phone_number}
+                  </p>
                   <p className="text-white/80 text-sm">
                     Share this with clients or forward your existing number. {subscriber.bot_name} will answer every call professionally.
                   </p>

@@ -64,6 +64,8 @@ export default function OnboardPage() {
       const { url } = await response.json()
 
       // Redirect to Stripe Checkout
+      // After payment, Stripe will redirect to /welcome
+      // Welcome page will redirect to /select-phone if no phone number
       if (url) {
         window.location.href = url
       } else {
@@ -274,7 +276,7 @@ export default function OnboardPage() {
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="m9 12 2 2 4-4"></path>
                 </svg>
-                Cancel anytime • No setup fees • Full refund within 30 days
+                Cancel anytime • $15 phone setup fee • Full refund within 30 days
               </div>
             </div>
 

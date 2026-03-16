@@ -55,8 +55,11 @@ async function handleCallEnded(payload: any): Promise<Response> {
     const callId = payload.call?.id || payload.id
     const assistantId = payload.call?.assistantId || payload.assistantId
     const transcript = payload.call?.transcript || payload.transcript || ''
-    const duration = payload.call?.duration || payload.duration || 0
+    const duration = payload.call?.duration || payload.duration || 0 // Duration in seconds
     const metadata = payload.call?.metadata || payload.metadata || {}
+    const direction = payload.call?.direction || metadata.direction || 'inbound'
+    const phoneNumberId = payload.call?.phoneNumberId || payload.phoneNumberId
+    const customerNumber = payload.call?.customer?.number
 
     // Get subscriber ID from metadata
     const subscriberId = metadata.subscriber_id
@@ -66,7 +69,55 @@ async function handleCallEnded(payload: any): Promise<Response> {
       return new Response('OK', { status: 200 })
     }
 
-    // Handle the call completion
+    // Get phone number record to link to subscriber
+    const phoneResult: any = await (supabase as any)
+      .from('subscriber_phone_numbers')
+      .select('id, phone_number')
+      .eq('subscriber_id', subscriberId)
+      .eq('phone_number_id', phoneNumberId)
+      .single()
+
+    const phoneRecord = phoneResult.data
+
+    // Convert duration from seconds to minutes
+    const durationMinutes = duration / 60
+
+    // Track usage in the database using the PostgreSQL function
+    const trackResult = await (supabase as any).rpc('track_call_usage', {
+      p_subscriber_id: subscriberId,
+      p_duration_minutes: durationMinutes,
+      p_direction: direction
+    })
+
+    if (trackResult.error) {
+      console.error('❌ Failed to track call usage:', trackResult.error)
+    } else {
+      console.log(`✅ Tracked ${durationMinutes.toFixed(2)} minutes for subscriber ${subscriberId}`)
+    }
+
+    // Log the call in call_logs table
+    if (phoneRecord) {
+      await (supabase as any)
+        .from('call_logs')
+        .insert({
+          subscriber_id: subscriberId,
+          phone_number_id: phoneRecord.id,
+          vapi_call_id: callId,
+          direction,
+          from_number: direction === 'outbound' ? phoneRecord.phone_number : customerNumber,
+          to_number: direction === 'outbound' ? customerNumber : phoneRecord.phone_number,
+          duration_seconds: duration,
+          duration_minutes: durationMinutes,
+          status: 'completed',
+          assistant_id: assistantId,
+          transcript,
+          started_at: new Date(Date.now() - (duration * 1000)).toISOString(),
+          ended_at: new Date().toISOString(),
+          metadata
+        })
+    }
+
+    // Handle the call completion (existing logic)
     await handleCallCompletion({
       callId,
       transcript,

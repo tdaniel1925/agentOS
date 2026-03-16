@@ -6,6 +6,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import UsageDashboard from '@/components/UsageDashboard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -208,6 +209,11 @@ export default async function DashboardPage() {
               href="/app/activity"
             />
           </div>
+        </div>
+
+        {/* Usage Dashboard */}
+        <div className="mb-8">
+          <UsageDashboard subscriberId={subscriber.id} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
