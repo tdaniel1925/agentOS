@@ -66,7 +66,7 @@ Message to parse:
 Return JSON only:`
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
       temperature: 0,
       system: systemPrompt,
