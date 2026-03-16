@@ -126,7 +126,7 @@ async function processEmailCheck(params: {
     console.log('📧 [Process] Step 3: Building summary...')
 
     // Step 3: Generate summary
-    const summary = buildEmailSummary(categories)
+    const summary = buildEmailSummary(categories, params.subscriber.id)
     console.log('📧 [Process] Step 3 complete')
 
     console.log('📧 [Process] Step 4: Storing in database...')
@@ -141,6 +141,7 @@ async function processEmailCheck(params: {
       lead_count: categories.lead,
       admin_count: categories.admin,
       summary_text: summary,
+      emails_data: emails,
       created_at: new Date().toISOString(),
     })
 
@@ -398,30 +399,29 @@ Return ONLY a JSON object with counts:
 /**
  * Build email summary message
  */
-function buildEmailSummary(categories: EmailCategory): string {
+function buildEmailSummary(categories: EmailCategory, subscriberId: string): string {
   const total =
     categories.urgent + categories.client + categories.lead + categories.admin
 
   if (total === 0) {
-    return 'Inbox summary (last 24hrs):\nAll clear! No new emails.'
+    return '📧 Inbox (last 24hrs):\nAll clear! No new emails.'
   }
 
-  let summary = 'Inbox summary (last 24hrs):\n'
+  let summary = '📧 Inbox (last 24hrs):\n'
 
   if (categories.urgent > 0) {
-    summary += `🔴 ${categories.urgent} urgent (reply URGENT to see)\n`
+    summary += `🔴 ${categories.urgent} urgent\n`
   }
   if (categories.client > 0) {
     summary += `👤 ${categories.client} client emails\n`
   }
   if (categories.lead > 0) {
-    summary += `🎯 ${categories.lead} potential lead${categories.lead > 1 ? 's' : ''}\n`
-  }
-  if (categories.admin > 0) {
-    summary += `📋 ${categories.admin} admin emails\n`
+    summary += `🎯 ${categories.lead} lead${categories.lead > 1 ? 's' : ''}\n`
   }
 
-  summary += '\nWant me to draft replies to any?'
+  // Add mobile web link
+  const webUrl = `${process.env.NEXT_PUBLIC_APP_URL}/m/emails/${subscriberId}`
+  summary += `\nView all: ${webUrl}`
 
   return summary
 }

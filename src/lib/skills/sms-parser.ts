@@ -30,11 +30,11 @@ export async function parseSMSIntent(
 Given a text message from a subscriber to their AI assistant, classify the intent and extract relevant entities.
 
 Intent Categories:
-- CALL_RELATED: CHECK_MISSED_CALLS, MAKE_OUTBOUND_CALL, UPDATE_GREETING, PAUSE_CALLS, RESUME_CALLS
-- EMAIL_RELATED: CONNECT_EMAIL, CHECK_EMAIL, SEND_EMAIL, CREATE_CAMPAIGN, PAUSE_CAMPAIGN, RESUME_CAMPAIGN, CAMPAIGN_REPORT
+- CALL_RELATED: CHECK_MISSED_CALLS, CHECK_CALLS, MAKE_OUTBOUND_CALL, UPDATE_GREETING, PAUSE_CALLS, RESUME_CALLS
+- EMAIL_RELATED: CONNECT_EMAIL, CHECK_EMAIL, SEND_EMAIL, REPLY_TO_EMAIL, COMPOSE_EMAIL, CONFIRM_SEND, CREATE_CAMPAIGN, PAUSE_CAMPAIGN, RESUME_CAMPAIGN, CAMPAIGN_REPORT
+- CALENDAR_RELATED: CHECK_CALENDAR, CHECK_SCHEDULE, BOOK_APPOINTMENT, CANCEL_APPOINTMENT
 - SOCIAL_RELATED: CREATE_POST, SCHEDULE_POSTS, SOCIAL_REPORT
 - LEAD_RELATED: GENERATE_LEADS, FOLLOW_UP_LEADS
-- APPOINTMENT_RELATED: CHECK_SCHEDULE, BOOK_APPOINTMENT, CANCEL_APPOINTMENT
 - CONTROL_RELATED: PAUSE_BOT, RESUME_BOT, CHECK_STATUS, ADD_SKILL, REMOVE_SKILL
 - REPORT_RELATED: WEEKLY_REPORT, COST_REPORT, CALL_REPORT
 - UNKNOWN: Anything that doesn't match above
@@ -43,6 +43,10 @@ Entity Extraction:
 For CREATE_CAMPAIGN extract: prospect_name, prospect_email, prospect_phone, industry, goal, duration, interval
 For GENERATE_LEADS extract: target_type, location, size, qualifier
 For CREATE_POST extract: topic, platform, count
+For CHECK_CALENDAR extract: timeframe (today or week)
+For REPLY_TO_EMAIL extract: reference_number (the email #), body_text (the reply message)
+For COMPOSE_EMAIL extract: to_address (email), subject, body_text (the message)
+For CONFIRM_SEND: No entities needed (just "SEND" or "send email")
 
 Return ONLY valid JSON with this structure:
 {

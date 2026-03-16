@@ -318,6 +318,69 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['subscriber_apps']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['subscriber_apps']['Insert']>
       }
+      subscriber_usage: {
+        Row: {
+          id: string
+          subscriber_id: string
+          billing_period_start: string
+          billing_period_end: string
+          voice_minutes_included: number
+          voice_minutes_used: number
+          voice_minutes_remaining: number
+          voice_overage_minutes: number
+          sms_messages_included: number
+          sms_messages_used: number
+          sms_messages_remaining: number
+          sms_overage_count: number
+          monthly_base_fee: number
+          voice_overage_charges: number
+          sms_overage_charges: number
+          total_charges: number
+          spending_limit: number
+          alert_sent_50_percent: boolean
+          alert_sent_80_percent: boolean
+          alert_sent_100_percent: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['subscriber_usage']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['subscriber_usage']['Insert']>
+      }
+      call_logs: {
+        Row: {
+          id: string
+          subscriber_id: string
+          vapi_call_id: string | null
+          started_at: string
+          ended_at: string | null
+          duration_minutes: number
+          direction: string
+          status: string
+          caller_number: string | null
+          contact_name: string | null
+          recording_url: string | null
+          transcript: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['call_logs']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['call_logs']['Insert']>
+      }
+      sms_logs: {
+        Row: {
+          id: string
+          subscriber_id: string
+          direction: string
+          from_number: string
+          to_number: string
+          body: string
+          status: string
+          twilio_sid: string | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['sms_logs']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['sms_logs']['Insert']>
+      }
     }
     Views: {}
     Functions: {}

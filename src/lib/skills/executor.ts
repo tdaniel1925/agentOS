@@ -11,6 +11,10 @@ import { createSocialPost, approveSocialPost } from './social-post'
 import { generateLeads } from './lead-generate'
 import { connectEmail } from './email-connect'
 import { checkEmail } from './email-check'
+import { checkCalls } from './call-check'
+import { checkCalendar } from './calendar-check'
+import { replyToEmail, composeEmail } from './email-reply'
+import { sendLatestDraft } from './email-send'
 
 export interface ExecutionResult {
   success: boolean
@@ -34,6 +38,9 @@ export async function executeSkill(
       // CALL RELATED
       case 'CHECK_MISSED_CALLS':
         return await handleCheckMissedCalls(context, supabase)
+
+      case 'CHECK_CALLS':
+        return await checkCalls({ subscriber })
 
       case 'MAKE_OUTBOUND_CALL':
         return await handleMakeOutboundCall(intent, context, subscriber, supabase)
@@ -63,6 +70,9 @@ export async function executeSkill(
       case 'CONNECT_EMAIL':
       case 'CHECK_EMAIL':
       case 'SEND_EMAIL':
+      case 'REPLY_TO_EMAIL':
+      case 'COMPOSE_EMAIL':
+      case 'CONFIRM_SEND':
       case 'CREATE_CAMPAIGN':
       case 'PAUSE_CAMPAIGN':
       case 'CAMPAIGN_REPORT':
@@ -78,6 +88,13 @@ export async function executeSkill(
       case 'GENERATE_LEADS':
       case 'FOLLOW_UP_LEADS':
         return await handleLeadCommand(intent, context, subscriber, supabase)
+
+      // CALENDAR RELATED
+      case 'CHECK_CALENDAR':
+        return await checkCalendar({
+          subscriber,
+          timeframe: intent.entities?.timeframe || 'today'
+        })
 
       // APPOINTMENT RELATED
       case 'CHECK_SCHEDULE':
@@ -662,9 +679,56 @@ async function handleEmailCommand(intent: SMSIntent, context: any, subscriber: a
     return result
   }
 
-  // SEND_EMAIL - one-off email
+  // REPLY_TO_EMAIL - Reply to an email by reference number
+  if (intent.intent === 'REPLY_TO_EMAIL') {
+    const { reference_number, body_text } = intent.entities
+
+    if (!reference_number || !body_text) {
+      return {
+        success: false,
+        message: "I need an email number and message. Try: 'reply to #1 - I'll send that proposal by end of day'",
+      }
+    }
+
+    const result = await replyToEmail({
+      subscriber: subscriber,
+      referenceNumber: parseInt(reference_number.toString()),
+      bodyText: body_text,
+    })
+
+    return result
+  }
+
+  // COMPOSE_EMAIL - Create a new email
+  if (intent.intent === 'COMPOSE_EMAIL') {
+    const { to_address, subject, body_text } = intent.entities
+
+    if (!to_address || !body_text) {
+      return {
+        success: false,
+        message: "I need an email address and message. Try: 'send email to john@example.com about Meeting - Let's meet next week'",
+      }
+    }
+
+    const result = await composeEmail({
+      subscriber: subscriber,
+      toAddress: to_address,
+      subject: subject || '(No Subject)',
+      bodyText: body_text,
+    })
+
+    return result
+  }
+
+  // CONFIRM_SEND - Send the latest draft
+  if (intent.intent === 'CONFIRM_SEND') {
+    const result = await sendLatestDraft(subscriber.id)
+    return result
+  }
+
+  // SEND_EMAIL - one-off email (deprecated, use COMPOSE_EMAIL)
   if (intent.intent === 'SEND_EMAIL') {
-    return { success: true, message: "One-off emails coming soon! For now, use campaigns for email outreach." }
+    return { success: true, message: "To send an email, try: 'send email to john@example.com about Subject - Your message here'" }
   }
 
   return { success: true, message: "Email features require the Email Campaign skill ($49/mo). Want to add it? Reply YES." }

@@ -24,44 +24,38 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const limit = parseInt(searchParams.get('limit') || '10', 10)
     const subscriberId = searchParams.get('subscriberId')
 
-    // Verify subscriber is authenticated
-    if (!subscriberId) {
-      return NextResponse.json(
-        { error: 'Subscriber ID required' },
-        { status: 401 }
-      )
-    }
+    // Optional: verify subscriber if ID provided
+    if (subscriberId) {
+      const { data: subscriber, error: subError } = await supabase
+        .from('subscribers')
+        .select('id, stripe_subscription_status')
+        .eq('id', subscriberId)
+        .single()
 
-    // Verify subscriber exists and is in good standing
-    const { data: subscriber, error: subError } = await supabase
-      .from('subscribers')
-      .select('id, stripe_subscription_status')
-      .eq('id', subscriberId)
-      .single()
+      if (subError || !subscriber) {
+        return NextResponse.json(
+          { error: 'Subscriber not found' },
+          { status: 404 }
+        )
+      }
 
-    if (subError || !subscriber) {
-      return NextResponse.json(
-        { error: 'Subscriber not found' },
-        { status: 404 }
-      )
-    }
+      // Check if subscriber already has a phone number
+      const { data: existingNumber } = await supabase
+        .from('subscriber_phone_numbers')
+        .select('phone_number, status')
+        .eq('subscriber_id', subscriberId)
+        .eq('status', 'active')
+        .single()
 
-    // Check if subscriber already has a phone number
-    const { data: existingNumber } = await supabase
-      .from('subscriber_phone_numbers')
-      .select('phone_number, status')
-      .eq('subscriber_id', subscriberId)
-      .eq('status', 'active')
-      .single()
-
-    if (existingNumber) {
-      return NextResponse.json(
-        {
-          error: 'You already have an active phone number',
-          existingNumber: existingNumber.phone_number
-        },
-        { status: 400 }
-      )
+      if (existingNumber) {
+        return NextResponse.json(
+          {
+            error: 'You already have an active phone number',
+            existingNumber: existingNumber.phone_number
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Get area code (from param or derive from zip)
@@ -91,21 +85,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Log the search
-    await supabase
-      .from('commands_log')
-      .insert({
-        subscriber_id: subscriberId,
-        channel: 'api',
-        raw_message: `Phone number search: ${areaCode}`,
-        skill_triggered: 'phone_number_search',
-        success: true,
-        metadata: {
-          area_code: areaCode,
-          results_count: availableNumbers.length,
-          zip_code: zipCode
-        }
-      })
+    // Log the search if subscriber ID provided
+    if (subscriberId) {
+      await supabase
+        .from('commands_log')
+        .insert({
+          subscriber_id: subscriberId,
+          channel: 'api',
+          raw_message: `Phone number search: ${areaCode}`,
+          skill_triggered: 'phone_number_search',
+          success: true,
+          metadata: {
+            area_code: areaCode,
+            results_count: availableNumbers.length,
+            zip_code: zipCode
+          }
+        })
+    }
 
     return NextResponse.json({
       success: true,
