@@ -1,0 +1,78 @@
+/**
+ * ADD THIS CODE TO YOUR TWILIO SMS WEBHOOK
+ * File: src/app/api/webhooks/twilio-sms/route.ts
+ *
+ * Add this section after you've identified the subscriber
+ */
+
+// =============================================
+// VOICE EMAIL CHECK COMMAND
+// =============================================
+
+const message = messageBody.toLowerCase().trim()
+
+// Detect voice email check requests
+if (
+  (message.includes('call') && message.includes('email')) ||
+  (message.includes('voice') && message.includes('email')) ||
+  (message.includes('read') && message.includes('email') && message.includes('me'))
+) {
+  console.log(`📞 Voice email check requested by ${subscriber.name}`)
+
+  try {
+    // Trigger voice email check API
+    const voiceCheckResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/voice-check`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        subscriber_id: subscriber.id,
+        limit: 10 // Max 10 emails per call
+      })
+    })
+
+    const voiceCheckData = await voiceCheckResponse.json()
+
+    if (voiceCheckData.success) {
+      // Confirm call is being placed
+      await sendSMS(fromPhone,
+        `📞 Calling you now to go through your ${voiceCheckData.email_count} unread email${voiceCheckData.email_count === 1 ? '' : 's'}...`
+      )
+    } else {
+      // Handle specific errors
+      if (voiceCheckData.error === 'No active email connection found') {
+        await sendSMS(fromPhone,
+          `❌ Email not connected yet\n\nText "connect email" to get started`
+        )
+      } else if (voiceCheckData.error === 'No unread emails') {
+        await sendSMS(fromPhone,
+          `📧 Inbox clear! No unread emails.`
+        )
+      } else {
+        await sendSMS(fromPhone,
+          `❌ Couldn't check your emails right now. Error: ${voiceCheckData.error}`
+        )
+      }
+    }
+  } catch (error) {
+    console.error('Error triggering voice email check:', error)
+    await sendSMS(fromPhone,
+      `❌ Something went wrong checking your emails. Try again in a moment.`
+    )
+  }
+
+  return twilioResponse()
+}
+
+
+/**
+ * EXAMPLE USER COMMANDS THAT TRIGGER THIS:
+ *
+ * - "call me about my emails"
+ * - "call and read my emails"
+ * - "voice email check"
+ * - "read my emails to me"
+ *
+ * All of these will trigger the voice email check!
+ */
