@@ -62,7 +62,63 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const isRep = !!repLookup.data
 
     // =============================================
-    // PATH A: REP IS SENDING A DEMO REQUEST
+    // CHECK 2: Is sender a subscriber?
+    // =============================================
+
+    const subscriberLookup: any = await (supabase as any)
+      .from('subscribers')
+      .select('*')
+      .eq('control_phone', fromPhone)
+      .single()
+
+    const isSubscriber = !!subscriberLookup.data
+
+    // =============================================
+    // PATH A: SUBSCRIBER COMMANDS (connect email, check calls, etc.)
+    // =============================================
+
+    if (isSubscriber && !isRep) {
+      const subscriber = subscriberLookup.data
+      console.log(`✅ Subscriber detected: ${subscriber.email} (${subscriber.bot_name})`)
+
+      // Import command handlers
+      const { parseSMSIntent } = await import('@/lib/skills/sms-parser')
+      const { executeSkill } = await import('@/lib/skills/executor')
+
+      // Load full context
+      const context = await loadSubscriberContext(subscriber.id, supabase)
+
+      // Parse command
+      const intent = await parseSMSIntent(messageBody, context)
+
+      console.log('[Subscriber Command]', {
+        raw_message: messageBody,
+        parsed_intent: intent.intent,
+        confidence: intent.confidence
+      })
+
+      // Log command
+      await (supabase as any).from('commands_log').insert({
+        subscriber_id: subscriber.id,
+        channel: 'sms',
+        raw_message: messageBody,
+        skill_triggered: intent.intent,
+        success: true,
+      })
+
+      // Execute skill
+      const result = await executeSkill(intent, context, subscriber)
+
+      // Send response
+      if (result.message) {
+        await sendSMS(fromPhone, result.message)
+      }
+
+      return twilioResponse()
+    }
+
+    // =============================================
+    // PATH B: REP IS SENDING A DEMO REQUEST
     // =============================================
 
     if (isRep) {
@@ -183,7 +239,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // =============================================
-    // PATH B: PROSPECT IS REPLYING
+    // PATH C: PROSPECT IS REPLYING
     // =============================================
 
     // Check if this is a YES reply to a pending demo
@@ -329,7 +385,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // =============================================
-    // PATH C: PROSPECT REQUESTING DEMO DIRECTLY
+    // PATH D: PROSPECT REQUESTING DEMO DIRECTLY
     // =============================================
 
     const keyword = messageBody.trim().toUpperCase()
@@ -477,4 +533,29 @@ function twilioResponse(): NextResponse {
   return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
     headers: { 'Content-Type': 'text/xml' }
   })
+}
+
+async function loadSubscriberContext(subscriberId: string, supabase: any): Promise<any> {
+  // Get subscriber
+  const subscriberResult: any = await supabase
+    .from('subscribers')
+    .select('*')
+    .eq('id', subscriberId)
+    .single()
+
+  const subscriber = subscriberResult.data
+
+  // Get active features
+  const featuresResult: any = await supabase
+    .from('feature_flags')
+    .select('*')
+    .eq('subscriber_id', subscriberId)
+    .eq('enabled', true)
+
+  const features = featuresResult.data || []
+
+  return {
+    subscriber,
+    features,
+  }
 }
