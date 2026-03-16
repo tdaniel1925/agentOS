@@ -55,7 +55,9 @@ export async function searchAvailableNumbers(
   limit: number = 10
 ): Promise<AvailableNumber[]> {
   try {
-    console.log(`Searching for numbers in area code ${areaCode}`)
+    console.log(`🔍 Searching for numbers in area code ${areaCode}`)
+    console.log(`   Twilio SID: ${process.env.TWILIO_ACCOUNT_SID?.substring(0, 10)}...`)
+    console.log(`   Twilio Token set: ${!!process.env.TWILIO_AUTH_TOKEN}`)
 
     const availableNumbers = await twilioClient
       .availablePhoneNumbers('US')
@@ -67,6 +69,8 @@ export async function searchAvailableNumbers(
         limit: limit
       })
 
+    console.log(`✅ Found ${availableNumbers.length} numbers in area code ${areaCode}`)
+
     return availableNumbers.map(num => ({
       phoneNumber: num.phoneNumber,
       friendlyName: num.friendlyName,
@@ -75,8 +79,9 @@ export async function searchAvailableNumbers(
       areaCode: areaCode
     }))
   } catch (error) {
-    console.error('Error searching for numbers:', error)
-    throw new Error(`Failed to search for numbers in area code ${areaCode}`)
+    console.error('❌ Error searching for numbers:', error)
+    console.error('   Error details:', JSON.stringify(error, null, 2))
+    throw new Error(`Failed to search for numbers in area code ${areaCode}: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
