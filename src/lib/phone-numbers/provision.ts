@@ -188,7 +188,7 @@ Be helpful, concise, and proactive. You work FOR them. Keep responses under 30 s
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: `Jordan - ${subscriberId}`,
+        name: `Jordan - ${subscriberId.substring(0, 8)}`,
         model: {
           provider: 'anthropic',
           model: 'claude-sonnet-4-20250514',
