@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const subscriberResult: any = await (supabase as any)
       .from('subscribers')
       .select('*')
-      .eq('contact_phone', From)
+      .eq('control_phone', From)
       .single()
 
     const subscriber = subscriberResult.data
