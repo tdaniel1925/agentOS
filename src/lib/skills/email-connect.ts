@@ -86,9 +86,9 @@ function generateOAuthUrl(provider: string, subscriberId: string): string {
 
     return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}&access_type=offline&prompt=consent`
   } else {
-    // Microsoft OAuth2 URL (placeholder)
+    // Microsoft OAuth2 URL
     const clientId = process.env.MICROSOFT_CLIENT_ID
-    const redirectUri = `${appUrl}/api/auth/outlook/callback`
+    const redirectUri = `${appUrl}/api/auth/microsoft/callback`
     const scope = 'https://graph.microsoft.com/Mail.Read'
 
     return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scope}&state=${state}&response_mode=query`
