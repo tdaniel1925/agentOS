@@ -14,12 +14,13 @@ export const metadata: Metadata = {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function MobileCallsPage({ params }: PageProps) {
+  const { id } = await params
   const supabase = createServiceClient()
 
   // Fetch calls from last 7 days
@@ -29,7 +30,7 @@ export default async function MobileCallsPage({ params }: PageProps) {
   const { data: calls, error } = await supabase
     .from('call_logs')
     .select('*')
-    .eq('subscriber_id', params.id)
+    .eq('subscriber_id', id)
     .gte('started_at', sevenDaysAgo.toISOString())
     .order('started_at', { ascending: false })
 
@@ -41,7 +42,7 @@ export default async function MobileCallsPage({ params }: PageProps) {
   const { data: subscriber } = await supabase
     .from('subscribers')
     .select('name, business_name, vapi_phone_number')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!subscriber) {
@@ -51,7 +52,7 @@ export default async function MobileCallsPage({ params }: PageProps) {
   return (
     <CallHistoryMobile
       calls={calls || []}
-      subscriberId={params.id}
+      subscriberId={id}
       businessName={(subscriber as any)?.business_name || 'Your Business'}
       businessNumber={(subscriber as any)?.vapi_phone_number}
     />

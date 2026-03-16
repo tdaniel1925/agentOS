@@ -9,9 +9,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = createServiceClient()
     const body = await request.json()
     const { body_text } = body
@@ -24,7 +25,7 @@ export async function PATCH(
       )
     }
 
-    console.log('[API] Updating draft:', params.id)
+    console.log('[API] Updating draft:', id)
 
     // Update draft
     const { data: draft, error } = await (supabase as any)
@@ -33,7 +34,7 @@ export async function PATCH(
         body_text: body_text,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('status', 'draft') // Only update if still in draft status
       .select()
       .single()
@@ -65,18 +66,19 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = createServiceClient()
 
-    console.log('[API] Fetching draft:', params.id)
+    console.log('[API] Fetching draft:', id)
 
     // Get draft
     const { data: draft, error } = await (supabase as any)
       .from('email_drafts')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error || !draft) {

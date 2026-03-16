@@ -15,21 +15,22 @@ export const metadata: Metadata = {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function MobileEmailsPage({
   params
 }: PageProps) {
+  const { id } = await params
   const supabase = createServiceClient()
 
   // Fetch latest email summary for this subscriber
   const { data: summary, error } = await supabase
     .from('email_summaries')
     .select('*')
-    .eq('subscriber_id', params.id)
+    .eq('subscriber_id', id)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
@@ -55,7 +56,7 @@ export default async function MobileEmailsPage({
     <EmailInboxMobile
       emails={emails}
       summary={summary}
-      subscriberId={params.id}
+      subscriberId={id}
     />
   )
 }

@@ -8,12 +8,13 @@ import { EmailDraftEditor } from '@/components/mobile/EmailDraftEditor'
 import { notFound, redirect } from 'next/navigation'
 
 interface DraftPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function DraftEditorPage({ params }: DraftPageProps) {
+  const { id } = await params
   const supabase = createServiceClient()
 
   try {
@@ -21,7 +22,7 @@ export default async function DraftEditorPage({ params }: DraftPageProps) {
     const { data: draft, error } = await (supabase as any)
       .from('email_drafts')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error || !draft) {
@@ -34,7 +35,7 @@ export default async function DraftEditorPage({ params }: DraftPageProps) {
     const now = new Date()
 
     if (now > expiresAt) {
-      console.warn('[Draft Page] Draft expired:', params.id)
+      console.warn('[Draft Page] Draft expired:', id)
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full text-center">
@@ -56,7 +57,7 @@ export default async function DraftEditorPage({ params }: DraftPageProps) {
 
     // Check if already sent
     if (draft.status === 'sent') {
-      console.log('[Draft Page] Draft already sent:', params.id)
+      console.log('[Draft Page] Draft already sent:', id)
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full text-center">

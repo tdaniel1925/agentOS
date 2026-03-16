@@ -14,23 +14,24 @@ export const metadata: Metadata = {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     view?: 'today' | 'week' | 'month'
-  }
+  }>
 }
 
 export default async function MobileCalendarPage({ params, searchParams }: PageProps) {
+  const { id } = await params
+  const { view = 'week' } = await searchParams
   const supabase = createServiceClient()
-  const view = searchParams.view || 'week'
 
   // Get email connection
   const { data: connection } = await supabase
     .from('email_connections')
     .select('*')
-    .eq('subscriber_id', params.id)
+    .eq('subscriber_id', id)
     .eq('status', 'active')
     .single()
 
@@ -65,7 +66,7 @@ export default async function MobileCalendarPage({ params, searchParams }: PageP
   return (
     <CalendarMobile
       events={events}
-      subscriberId={params.id}
+      subscriberId={id}
       view={view}
       connected={!!connection}
       error={error}
