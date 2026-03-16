@@ -103,9 +103,9 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Choose Your AI Assistant Number</h1>
+          <h1 className="text-2xl font-bold mb-2">Choose Your Business Phone Number</h1>
           <p className="text-gray-600 text-sm">
-            This number is for <strong>you</strong> to text commands to Jordan. Your customers won't see it.
+            This is your <strong>customer-facing number</strong>. Customers will call this number and Jordan (your AI) will answer.
           </p>
         </div>
 
