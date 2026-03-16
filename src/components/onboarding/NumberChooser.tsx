@@ -1,11 +1,10 @@
 'use client'
 
 /**
- * Number Chooser - Simple and Clean
- * Shows available numbers, user picks one, done.
+ * Number Chooser - Simple search like Twilio
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { AvailableNumber } from '@/lib/phone-numbers/provision'
 
 interface NumberChooserProps {
@@ -14,46 +13,45 @@ interface NumberChooserProps {
 }
 
 export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) {
+  const [searchQuery, setSearchQuery] = useState('')
   const [numbers, setNumbers] = useState<AvailableNumber[]>([])
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [isProvisioning, setIsProvisioning] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentAreaCode, setCurrentAreaCode] = useState<string>('415')
 
-  // Load numbers on mount - try multiple area codes until we find some
-  useEffect(() => {
-    loadAvailableNumbers()
-  }, [])
+  async function handleSearch(): Promise<void> {
+    if (!searchQuery.trim()) {
+      setError('Enter an area code (e.g., 415) or digit pattern')
+      return
+    }
 
-  async function loadAvailableNumbers(): Promise<void> {
     setIsLoading(true)
     setError(null)
     setSelectedNumber(null)
 
-    // Try area codes in order until we find numbers
-    const areaCodesToTry = ['415', '212', '310', '312', '713', '305', '404', '214', '602', '480']
+    try {
+      // If 3 digits, treat as area code
+      const isAreaCode = /^\d{3}$/.test(searchQuery.trim())
+      const url = isAreaCode
+        ? `/api/phone-numbers/search?areaCode=${searchQuery.trim()}&limit=50`
+        : `/api/phone-numbers/search?contains=${searchQuery.trim()}&limit=50`
 
-    for (const areaCode of areaCodesToTry) {
-      try {
-        const res = await fetch(`/api/phone-numbers/search?areaCode=${areaCode}&limit=20`)
-        const data = await res.json()
+      const res = await fetch(url)
+      const data = await res.json()
 
-        if (res.ok && data.numbers && data.numbers.length > 0) {
-          setNumbers(data.numbers)
-          setCurrentAreaCode(areaCode)
-          setIsLoading(false)
-          return
-        }
-      } catch (err) {
-        console.error(`Failed to load from ${areaCode}:`, err)
-        // Continue to next area code
+      if (!res.ok || !data.numbers || data.numbers.length === 0) {
+        setError(`No numbers found matching "${searchQuery}". Try a different search.`)
+        setNumbers([])
+      } else {
+        setNumbers(data.numbers)
       }
+    } catch (err) {
+      setError('Search failed. Please try again.')
+      setNumbers([])
+    } finally {
+      setIsLoading(false)
     }
-
-    // If we get here, no numbers found in any area code
-    setError('No numbers available right now. Please try again in a few minutes.')
-    setIsLoading(false)
   }
 
   async function handleProvision(): Promise<void> {
@@ -69,16 +67,13 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         body: JSON.stringify({
           subscriberId,
           phoneNumber: selectedNumber,
-          areaCode: currentAreaCode
+          areaCode: selectedNumber.substring(2, 5) // Extract from +1XXXYYYZZZZ
         })
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        if (res.status === 402) {
-          throw new Error('Payment failed. Please update your payment method.')
-        }
         throw new Error(data.error || 'Provisioning failed')
       }
 
@@ -111,30 +106,48 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-gray-700">
             <strong>💡 Pro Tip:</strong> Area code doesn't matter - you can forward calls from your existing business number to this one.
-            Just pick any number you like!
           </div>
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B3A7D]"></div>
-            <p className="mt-2 text-gray-600">Loading available numbers...</p>
+        {/* Search Box */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">
+            Search by area code or pattern
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="415 or 800-FLOWERS"
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#1B3A7D] focus:border-transparent"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="px-6 py-2 bg-[#1B3A7D] text-white rounded-lg font-medium hover:bg-[#152d63] disabled:opacity-50"
+            >
+              {isLoading ? 'Searching...' : 'Search'}
+            </button>
           </div>
-        )}
+          <p className="text-xs text-gray-500 mt-1">
+            Try: 415, 212, 800, or any digit pattern you want
+          </p>
+        </div>
 
         {/* Error State */}
-        {error && !isLoading && (
+        {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800 mb-4">
             {error}
           </div>
         )}
 
         {/* Number List */}
-        {!isLoading && numbers.length > 0 && (
+        {numbers.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-3">
-              Available Numbers - Area Code ({currentAreaCode})
+            <h2 className="text-sm font-medium text-gray-600 mb-3">
+              {numbers.length} numbers available
             </h2>
 
             <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
