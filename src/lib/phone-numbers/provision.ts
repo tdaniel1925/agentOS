@@ -59,13 +59,12 @@ export async function searchAvailableNumbers(
     console.log(`   Twilio SID: ${process.env.TWILIO_ACCOUNT_SID?.substring(0, 10)}...`)
     console.log(`   Twilio Token set: ${!!process.env.TWILIO_AUTH_TOKEN}`)
 
+    // Twilio SDK expects these exact parameters
     const availableNumbers = await twilioClient
       .availablePhoneNumbers('US')
       .local
       .list({
-        areaCode: areaCode,
-        voiceEnabled: true,
-        smsEnabled: true,
+        areaCode: parseInt(areaCode, 10),
         limit: limit
       })
 
