@@ -18,7 +18,7 @@ interface NumberChooserProps {
   onComplete: () => void
 }
 
-export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps): JSX.Element {
+export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) {
   const [zipCode, setZipCode] = useState('')
   const [numbers, setNumbers] = useState<AvailableNumber[]>([])
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null)

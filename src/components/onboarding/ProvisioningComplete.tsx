@@ -12,7 +12,7 @@ interface ProvisioningCompleteProps {
   onContinue: () => void
 }
 
-export function ProvisioningComplete({ phoneNumber, onContinue }: ProvisioningCompleteProps): JSX.Element {
+export function ProvisioningComplete({ phoneNumber, onContinue }: ProvisioningCompleteProps) {
   function formatPhoneNumber(phone: string): string {
     const cleaned = phone.replace(/\D/g, '')
     const match = cleaned.match(/^1?(\d{3})(\d{3})(\d{4})$/)
