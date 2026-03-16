@@ -78,128 +78,237 @@ export default function OnboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1B3A7D] to-[#0F2347] py-12 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-[#1B3A7D] mb-2">
-          Tell Us About Your Business
-        </h1>
-        <p className="text-gray-600 mb-8">
-          Just 5 quick questions to customize your bot
-        </p>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
+      <div className="max-w-2xl mx-auto">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-[#1B3A7D]">
+                <path d="M12 8V4H8"></path>
+                <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                <path d="M2 14h2"></path>
+                <path d="M20 14h2"></path>
+                <path d="M15 13v2"></path>
+                <path d="M9 13v2"></path>
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-white">AgentOS</span>
           </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              1. Business Name
-            </label>
-            <input
-              type="text"
-              name="business_name"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-transparent"
-              placeholder="Acme Insurance Agency"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              2. Business Type
-            </label>
-            <select
-              name="business_type"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-transparent"
-            >
-              <option value="">Select your industry...</option>
-              <option value="insurance">Insurance</option>
-              <option value="cpa">CPA / Accounting</option>
-              <option value="law">Law / Legal</option>
-              <option value="realestate">Real Estate</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              3. Business Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-transparent"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              4. Biggest Pain Point
-            </label>
-            <div className="space-y-2">
-              {[
-                'Missing calls after hours',
-                'Too many leads to follow up',
-                'Appointment scheduling takes too long',
-                'Need help with customer service',
-                'Want to automate social media',
-              ].map((option) => (
-                <label key={option} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="pain_point"
-                    value={option}
-                    required
-                    className="mr-2"
-                  />
-                  <span className="text-gray-700">{option}</span>
-                </label>
-              ))}
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-[#1B3A7D]/10 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-[#1B3A7D]">
+                <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                <rect width="20" height="14" x="2" y="6" rx="2"></rect>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-[#1B3A7D]">
+                Tell Us About Your Business
+              </h1>
+              <p className="text-gray-600">
+                Just 5 quick questions to customize your bot
+              </p>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              5. Bot Name (Optional)
-            </label>
-            <input
-              type="text"
-              name="bot_name"
-              defaultValue="Jordan"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-transparent"
-              placeholder="Jordan"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              This is what your customers will hear
-            </p>
+          {/* Progress Indicator */}
+          <div className="mb-8">
+            <div className="flex justify-between text-xs font-medium text-gray-500 mb-2">
+              <span>Step 1 of 2</span>
+              <span>Next: Payment</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-[#1B3A7D] h-2 rounded-full" style={{width: '50%'}}></div>
+            </div>
           </div>
 
-          <div className="border-t pt-6 mt-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="text-2xl font-bold text-[#1B3A7D]">
-                  $97<span className="text-base font-normal text-gray-600">/month</span>
-                </div>
-                <div className="text-sm text-gray-600">
-                  Cancel anytime
-                </div>
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-6 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" x2="12" y1="8" y2="12"></line>
+                <line x1="12" x2="12.01" y1="16" y2="16"></line>
+              </svg>
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Question 1 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">1</span>
+                  Business Name
+                </span>
+              </label>
+              <input
+                type="text"
+                name="business_name"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
+                placeholder="Acme Insurance Agency"
+              />
+            </div>
+
+            {/* Question 2 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">2</span>
+                  Business Type
+                </span>
+              </label>
+              <select
+                name="business_type"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
+              >
+                <option value="">Select your industry...</option>
+                <option value="insurance">🛡️ Insurance</option>
+                <option value="cpa">💼 CPA / Accounting</option>
+                <option value="law">⚖️ Law / Legal</option>
+                <option value="realestate">🏠 Real Estate</option>
+                <option value="other">✨ Other</option>
+              </select>
+            </div>
+
+            {/* Question 3 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">3</span>
+                  Business Phone Number
+                </span>
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+
+            {/* Question 4 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-4">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">4</span>
+                  Biggest Pain Point
+                </span>
+              </label>
+              <div className="space-y-3">
+                {[
+                  'Missing calls after hours',
+                  'Too many leads to follow up',
+                  'Appointment scheduling takes too long',
+                  'Need help with customer service',
+                  'Want to automate social media',
+                ].map((option) => (
+                  <label key={option} className="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-[#1B3A7D] cursor-pointer transition-all group">
+                    <input
+                      type="radio"
+                      name="pain_point"
+                      value={option}
+                      required
+                      className="w-4 h-4 text-[#1B3A7D] border-gray-300 focus:ring-[#1B3A7D]"
+                    />
+                    <span className="ml-3 text-sm text-gray-700 group-hover:text-[#1B3A7D] font-medium">{option}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
+            {/* Question 5 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">5</span>
+                  Bot Name (Optional)
+                </span>
+              </label>
+              <input
+                type="text"
+                name="bot_name"
+                defaultValue="Jordan"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
+                placeholder="Jordan"
+              />
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+                This is what your customers will hear
+              </p>
+            </div>
+
+            {/* Pricing Summary */}
+            <div className="bg-gradient-to-br from-[#1B3A7D] to-[#0F2347] rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-xs font-medium text-white/60 mb-1">Your Plan</div>
+                  <div className="text-4xl font-bold">
+                    $97<span className="text-lg font-normal text-white/80">/month</span>
+                  </div>
+                </div>
+                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+                    <path d="M12 8V4H8"></path>
+                    <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                    <path d="M2 14h2"></path>
+                    <path d="M20 14h2"></path>
+                    <path d="M15 13v2"></path>
+                    <path d="M9 13v2"></path>
+                  </svg>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+                Cancel anytime • No setup fees • Full refund within 30 days
+              </div>
+            </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#C7181F] hover:bg-[#A01419] text-white font-bold py-4 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-[#C7181F] hover:bg-[#A01419] text-white font-bold py-4 rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 text-lg"
             >
-              {loading ? 'Processing...' : 'Continue to Payment'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Continue to Payment
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </>
+              )}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-white/60 mt-6">
+          🔒 Secure checkout powered by Stripe
+        </p>
       </div>
     </div>
   )
