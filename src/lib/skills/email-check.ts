@@ -51,7 +51,7 @@ export async function checkEmail(params: CheckEmailParams): Promise<CheckResult>
 
     // Send acknowledgment
     await sendSMS({
-      to: subscriber.contact_phone,
+      to: subscriber.control_phone,
       body: 'Checking your inbox now... I\'ll text you the summary in 30 seconds.',
     })
 
@@ -62,8 +62,8 @@ export async function checkEmail(params: CheckEmailParams): Promise<CheckResult>
     }).catch((error) => {
       console.error('Email check failed:', error)
       sendSMS({
-        to: subscriber.contact_phone,
-        body: `I ran into an issue checking your email. I've logged it.`,
+        to: subscriber.control_phone,
+        body: `I ran into an issue checking your email: ${error instanceof Error ? error.message : 'Unknown error'}`,
       })
     })
 
@@ -117,7 +117,7 @@ async function processEmailCheck(params: {
 
     // Step 5: Send SMS summary
     await sendSMS({
-      to: params.subscriber.contact_phone,
+      to: params.subscriber.control_phone,
       body: summary,
     })
 
@@ -125,7 +125,7 @@ async function processEmailCheck(params: {
     await (supabase as any).from('commands_log').insert({
       subscriber_id: params.subscriber.id,
       channel: 'sms',
-      sender_identifier: params.subscriber.contact_phone,
+      sender_identifier: params.subscriber.control_phone,
       intent: 'CHECK_EMAIL',
       raw_message: 'Check email',
       executed: true,
@@ -139,16 +139,93 @@ async function processEmailCheck(params: {
 }
 
 /**
- * Fetch emails from provider (placeholder)
+ * Fetch emails from provider
  */
 async function fetchEmails(connection: any): Promise<any[]> {
-  // In production, use:
-  // - Gmail: https://developers.google.com/gmail/api
-  // - Outlook: https://learn.microsoft.com/en-us/graph/api/user-list-messages
+  const supabase = createServiceClient()
 
-  // For now, return empty array
-  // Real implementation would fetch last 24 hours of unread emails
-  return []
+  try {
+    if (connection.provider === 'outlook') {
+      // Import Microsoft Graph functions
+      const { getMicrosoftUnreadEmails, refreshMicrosoftToken, decryptToken, encryptToken } = await import('@/lib/email/microsoft')
+
+      // Decrypt the access token
+      let accessToken = decryptToken(connection.encrypted_access_token)
+
+      // Check if token is expired
+      const tokenExpiresAt = new Date(connection.token_expires_at)
+      const now = new Date()
+
+      if (now >= tokenExpiresAt) {
+        console.log('Access token expired, refreshing...')
+
+        // Decrypt refresh token
+        const refreshToken = decryptToken(connection.encrypted_refresh_token)
+
+        // Refresh the token
+        const newTokens = await refreshMicrosoftToken(refreshToken)
+
+        // Update access token
+        accessToken = newTokens.access_token
+
+        // Re-encrypt and store new tokens
+        const newEncryptedAccessToken = encryptToken(newTokens.access_token)
+        const newEncryptedRefreshToken = encryptToken(newTokens.refresh_token)
+        const newExpiresAt = new Date(Date.now() + (newTokens.expires_in * 1000))
+
+        await (supabase as any)
+          .from('email_connections')
+          .update({
+            encrypted_access_token: newEncryptedAccessToken,
+            encrypted_refresh_token: newEncryptedRefreshToken,
+            token_expires_at: newExpiresAt.toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', connection.id)
+
+        console.log('✅ Token refreshed successfully')
+      }
+
+      // Fetch unread emails from Microsoft Graph
+      const emails = await getMicrosoftUnreadEmails(accessToken, 50)
+
+      console.log(`Fetched ${emails.length} unread emails from Outlook`)
+
+      // Filter to last 24 hours
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const recentEmails = emails.filter((email: any) => {
+        const receivedDate = new Date(email.receivedDateTime)
+        return receivedDate >= yesterday
+      })
+
+      console.log(`${recentEmails.length} emails from last 24 hours`)
+
+      return recentEmails
+
+    } else if (connection.provider === 'gmail') {
+      // TODO: Implement Gmail fetching
+      console.log('Gmail support coming soon')
+      return []
+    }
+
+    return []
+  } catch (error: unknown) {
+    console.error('❌ Error fetching emails:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    // If it's an auth error, mark connection as failed
+    if (errorMessage.includes('401') || errorMessage.includes('token')) {
+      await (supabase as any)
+        .from('email_connections')
+        .update({
+          status: 'error',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', connection.id)
+    }
+
+    throw error
+  }
 }
 
 /**
@@ -169,14 +246,73 @@ async function categorizeEmails(
     }
   }
 
-  // In production, use Claude to categorize each email
-  // For now, return simulated categories
-  return {
-    urgent: 0,
-    client: 0,
-    lead: 0,
-    admin: 0,
-    junk: 0,
+  try {
+    // Prepare email data for Claude
+    const emailSummaries = emails.map((email: any, index: number) => {
+      return `Email ${index + 1}:
+From: ${email.from?.emailAddress?.name || 'Unknown'} <${email.from?.emailAddress?.address || 'unknown'}>
+Subject: ${email.subject || '(no subject)'}
+Preview: ${email.bodyPreview || '(no preview)'}
+---`
+    }).join('\n\n')
+
+    // Use Claude to categorize
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: `You are analyzing emails for ${subscriber.business_name || subscriber.name}, a ${subscriber.business_type || 'business'}.
+
+Categorize these ${emails.length} emails into:
+- URGENT: Needs immediate attention (complaints, time-sensitive requests, angry clients)
+- CLIENT: Existing client communication (questions, updates, requests)
+- LEAD: Potential new business (inquiries, prospects)
+- ADMIN: Administrative/internal (receipts, newsletters, notifications)
+- JUNK: Spam or irrelevant
+
+${emailSummaries}
+
+Return ONLY a JSON object with counts:
+{"urgent": 0, "client": 0, "lead": 0, "admin": 0, "junk": 0}`
+        }
+      ]
+    })
+
+    const content = response.content[0]
+    if (content.type === 'text') {
+      // Parse Claude's response
+      const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const categories = JSON.parse(jsonMatch[0])
+        console.log('Email categories:', categories)
+        return categories
+      }
+    }
+
+    // Fallback: if parsing fails, return default categorization
+    console.warn('Failed to parse Claude categorization, using fallback')
+    return {
+      urgent: 0,
+      client: emails.length,
+      lead: 0,
+      admin: 0,
+      junk: 0,
+    }
+
+  } catch (error) {
+    console.error('Error categorizing emails with Claude:', error)
+
+    // Fallback categorization
+    return {
+      urgent: 0,
+      client: emails.length,
+      lead: 0,
+      admin: 0,
+      junk: 0,
+    }
   }
 }
 
