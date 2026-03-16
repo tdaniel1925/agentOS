@@ -60,6 +60,7 @@ export async function executeSkill(
         return await handleReport(intent, context, subscriber, supabase)
 
       // EMAIL RELATED
+      case 'CONNECT_EMAIL':
       case 'CHECK_EMAIL':
       case 'SEND_EMAIL':
       case 'CREATE_CAMPAIGN':
