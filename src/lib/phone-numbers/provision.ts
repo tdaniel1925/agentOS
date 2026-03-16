@@ -190,20 +190,14 @@ Be helpful, concise, and proactive. You work FOR them. Keep responses under 30 s
       body: JSON.stringify({
         name: `Jordan - ${subscriberId.substring(0, 8)}`,
         model: {
-          provider: 'anthropic',
-          model: 'claude-sonnet-4-20250514',
-          temperature: 0.7,
-          maxTokens: 250,
-          messages: [
-            {
-              role: 'system',
-              content: inboundPrompt
-            }
-          ]
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          temperature: 0.8,
+          systemPrompt: inboundPrompt
         },
         voice: {
-          provider: 'playht',
-          voiceId: 'jennifer'
+          provider: 'vapi',
+          voiceId: 'Elliot'
         },
         firstMessage: `Hi! This is Jordan. How can I help you today?`,
         endCallMessage: `Thanks for calling. I'll get that done for you right away.`,
