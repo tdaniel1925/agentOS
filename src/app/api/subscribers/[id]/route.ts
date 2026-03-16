@@ -29,32 +29,31 @@ export async function GET(
       )
     }
 
-    // Fetch subscriber with phone number info
-    const { data: subscriber, error } = await supabase
+    // Fetch subscriber
+    const { data: subscriber, error: subError } = await supabase
       .from('subscribers')
-      .select(`
-        *,
-        subscriber_phone_numbers (
-          id,
-          phone_number,
-          phone_number_id,
-          vapi_assistant_id,
-          status,
-          assigned_at
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single()
 
-    if (error || !subscriber) {
+    if (subError || !subscriber) {
+      console.error('Subscriber fetch error:', subError)
       return NextResponse.json(
-        { error: 'Subscriber not found' },
+        { error: 'Subscriber not found', details: subError?.message },
         { status: 404 }
       )
     }
 
-    // Extract phone number data
-    const phoneNumber = subscriber.subscriber_phone_numbers?.[0] || null
+    // Fetch phone number info separately
+    const { data: phoneNumbers } = await supabase
+      .from('subscriber_phone_numbers')
+      .select('*')
+      .eq('subscriber_id', id)
+      .eq('status', 'active')
+      .order('assigned_at', { ascending: false })
+      .limit(1)
+
+    const phoneNumber = phoneNumbers?.[0] || null
 
     return NextResponse.json({
       id: subscriber.id,
