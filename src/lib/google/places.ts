@@ -60,8 +60,8 @@ export async function searchBusinesses(query: string): Promise<BusinessPredictio
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-      },
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY!,
+      } as HeadersInit,
       body: JSON.stringify({
         input: query,
         includedPrimaryTypes: ['establishment'],
@@ -110,7 +110,7 @@ export async function getBusinessDetails(placeId: string): Promise<BusinessDetai
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY!,
           'X-Goog-FieldMask': [
             'id',
             'displayName',
@@ -123,7 +123,7 @@ export async function getBusinessDetails(placeId: string): Promise<BusinessDetai
             'rating',
             'userRatingCount',
           ].join(','),
-        },
+        } as HeadersInit,
       }
     )
 
