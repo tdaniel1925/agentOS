@@ -21,7 +21,7 @@ export default async function AgentConfigPage() {
   // Get subscriber
   const subscriberResult = await supabase
     .from('subscribers')
-    .select('*')
+    .select('id, business_name, billing_status')
     .eq('auth_user_id', session.user.id)
     .maybeSingle()
 
@@ -29,8 +29,7 @@ export default async function AgentConfigPage() {
     redirect('/onboarding')
   }
 
-  const subscriber = subscriberResult.data
-  const subscriberId = subscriber.id
+  const subscriberId = subscriberResult.data.id
 
   // Get agent configuration
   const { data: agent } = await supabase
