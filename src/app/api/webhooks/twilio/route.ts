@@ -141,10 +141,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 6. Parse the command using SMS intent parser
+    // 6. Check if this is a Jordyn voice command (call someone, etc.)
+    const lowerBody = Body.toLowerCase()
+    const isCallCommand = lowerBody.includes('call') && (lowerBody.includes('back') || lowerBody.includes('about') || lowerBody.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/))
+
+    if (isCallCommand) {
+      // Handle via new SMS command system
+      const executeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/sms-commands/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriberId: subscriber.id,
+          rawMessage: Body,
+          fromNumber: From
+        })
+      })
+
+      // Response is already sent by the execute endpoint
+      return new Response('OK')
+    }
+
+    // 7. Parse the command using SMS intent parser (existing system)
     const intent = await parseSMSIntent(Body, context)
 
-    // 7. Log the command
+    // 8. Log the command
     await (supabase as any).from('commands_log').insert({
       subscriber_id: subscriber.id,
       channel: 'sms',
@@ -154,10 +174,10 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     })
 
-    // 8. Execute the skill
+    // 9. Execute the skill
     const result = await executeSkill(intent, context, subscriber)
 
-    // 9. Send response
+    // 10. Send response
     if (result.message) {
       await sendSMS({
         to: From,
