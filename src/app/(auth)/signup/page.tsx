@@ -6,18 +6,33 @@
 
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { STRIPE_PRICES } from '@/lib/stripe/products'
+import ProcessingOverlay from '@/components/onboarding/ProcessingOverlay'
 
 export const dynamic = 'force-dynamic'
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showProcessing, setShowProcessing] = useState(false)
+  const [processingSubscriberId, setProcessingSubscriberId] = useState<string | null>(null)
+
+  // Check for Stripe success redirect
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const subscriberId = searchParams.get('subscriber_id')
+
+    if (success === 'true' && subscriberId) {
+      setProcessingSubscriberId(subscriberId)
+      setShowProcessing(true)
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -81,6 +96,8 @@ export default function SignupPage() {
       const { url } = await checkoutResponse.json()
 
       if (url) {
+        // Store subscriber ID in sessionStorage for when we return
+        sessionStorage.setItem('pending_subscriber_id', data.subscriber_id)
         window.location.href = url
       } else {
         throw new Error('Failed to create checkout session')
@@ -92,9 +109,27 @@ export default function SignupPage() {
     }
   }
 
+  function handleProcessingComplete() {
+    // Redirect to dashboard
+    router.push('/app')
+  }
+
+  function handleProcessingError(errorMessage: string) {
+    setShowProcessing(false)
+    setError(errorMessage)
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1B3A7D] to-[#0F2347] flex items-center justify-center px-4 py-8">
-      <div className="max-w-6xl w-full">
+    <>
+      {showProcessing && processingSubscriberId && (
+        <ProcessingOverlay
+          subscriberId={processingSubscriberId}
+          onComplete={handleProcessingComplete}
+          onError={handleProcessingError}
+        />
+      )}
+      <div className="min-h-screen bg-gradient-to-b from-[#1B3A7D] to-[#0F2347] flex items-center justify-center px-4 py-8">
+        <div className="max-w-6xl w-full">
         {/* Logo */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-3 mb-4">
