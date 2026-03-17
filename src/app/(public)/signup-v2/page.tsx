@@ -64,7 +64,7 @@ export default function SignupV2Page() {
   return (
     <SignupLayout>
       <ProgressIndicator current={currentStep} total={4} />
-      <div className="mt-8">{renderStep()}</div>
+      <div className="mt-6">{renderStep()}</div>
     </SignupLayout>
   )
 }

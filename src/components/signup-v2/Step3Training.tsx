@@ -86,27 +86,27 @@ export default function Step3Training({ business, onTrainingComplete }: Step3Pro
   }
 
   return (
-    <div className="max-w-2xl mx-auto animate-slide-up">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+    <div className="w-full animate-slide-up">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold mb-2 text-gray-900">
           Building your{" "}
           <span className="bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
             Jordyn Agent
           </span>
         </h1>
-        <p className="text-lg text-gray-600">
-          This will only take a few seconds. We're training Jordyn on your business data...
+        <p className="text-base text-gray-600">
+          Training Jordyn on your business data...
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 mb-8">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-6">
         {/* Progress bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Training Progress</span>
-            <span className="text-sm font-semibold text-purple-600">{Math.round(progress)}%</span>
+            <span className="text-xs font-medium text-gray-700">Training Progress</span>
+            <span className="text-xs font-semibold text-purple-600">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
@@ -117,7 +117,7 @@ export default function Step3Training({ business, onTrainingComplete }: Step3Pro
         </div>
 
         {/* Training steps */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {TRAINING_STEPS.map((step, index) => {
             const isComplete = index < currentStepIndex
             const isCurrent = index === currentStepIndex
@@ -126,21 +126,21 @@ export default function Step3Training({ business, onTrainingComplete }: Step3Pro
             return (
               <div
                 key={index}
-                className={`flex items-start space-x-3 transition-all duration-300 ${
+                className={`flex items-center space-x-2 transition-all duration-300 ${
                   isCurrent ? "scale-105" : ""
                 }`}
               >
-                <div className="flex-shrink-0 mt-0.5">
+                <div className="flex-shrink-0">
                   {isComplete ? (
-                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
                   ) : isCurrent ? (
-                    <Loader2 className="h-6 w-6 text-purple-600 animate-spin" />
+                    <Loader2 className="h-5 w-5 text-purple-600 animate-spin" />
                   ) : (
-                    <div className="h-6 w-6 border-2 border-gray-300 rounded-full"></div>
+                    <div className="h-5 w-5 border-2 border-gray-300 rounded-full"></div>
                   )}
                 </div>
                 <p
-                  className={`text-lg font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors ${
                     isComplete
                       ? "text-green-700"
                       : isCurrent
@@ -156,15 +156,15 @@ export default function Step3Training({ business, onTrainingComplete }: Step3Pro
         </div>
 
         {error && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
             {error}
           </div>
         )}
       </div>
 
       <div className="text-center">
-        <p className="text-sm text-gray-500">
-          Please don't close this window. This process typically takes 15-20 seconds.
+        <p className="text-xs text-gray-500">
+          Please don't close this window. This typically takes 15-20 seconds.
         </p>
       </div>
     </div>

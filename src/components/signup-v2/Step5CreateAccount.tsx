@@ -48,36 +48,36 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
   }
 
   return (
-    <div className="max-w-2xl mx-auto animate-slide-up">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+    <div className="w-full animate-slide-up">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold mb-2 text-gray-900">
           Claim{" "}
           <span className="bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
             {businessDetails.name}'s
           </span>{" "}
-          Custom Jordyn Agent
+          Jordyn Agent
         </h1>
-        <p className="text-lg text-gray-600">Create your account to get started</p>
+        <p className="text-base text-gray-600">Create your account to get started</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 mb-6">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-4">
         {/* Free trial badge */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-full">
-            <Sparkles className="h-5 w-5 text-green-600" />
-            <span className="font-semibold text-green-700">Free for 7 days</span>
+        <div className="mb-6 text-center">
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-full">
+            <Sparkles className="h-4 w-4 text-green-600" />
+            <span className="font-semibold text-sm text-green-700">Free for 7 days</span>
           </div>
         </div>
 
         {/* Email signup form */}
-        <form onSubmit={handleEmailSignup} className="space-y-4">
+        <form onSubmit={handleEmailSignup} className="space-y-3">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
               Email
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="email"
@@ -86,18 +86,18 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
+                className="w-full pl-10 pr-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-1">
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="password"
@@ -107,13 +107,13 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
                 placeholder="Create a password"
                 required
                 minLength={8}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
+                className="w-full pl-10 pr-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
               {error}
             </div>
           )}
@@ -121,7 +121,7 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full py-3 px-4 text-base bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? "Creating account..." : "Create My Account"}
           </button>
@@ -129,12 +129,12 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
       </div>
 
       {/* Trial info */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6 text-center">
-        <p className="text-purple-900 font-medium">
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4 text-center">
+        <p className="text-purple-900 font-medium text-sm">
           Start risk-free. 7-day trial with all features included.
         </p>
-        <p className="text-purple-700 text-sm mt-2">
-          No credit card required. Cancel anytime during the trial period.
+        <p className="text-purple-700 text-xs mt-1">
+          No credit card required. Cancel anytime.
         </p>
       </div>
     </div>
