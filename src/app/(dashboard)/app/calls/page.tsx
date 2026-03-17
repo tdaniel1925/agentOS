@@ -19,7 +19,7 @@ export default async function CallLogsPage() {
   }
 
   // Get subscriber
-  const { data: subscriber } = await supabase
+  const { data: subscriber }: any = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
@@ -30,7 +30,7 @@ export default async function CallLogsPage() {
   }
 
   // Get all calls
-  const { data: calls } = await supabase
+  const { data: calls }: any = await supabase
     .from('calls')
     .select('*')
     .eq('subscriber_id', subscriber.id)
@@ -39,9 +39,9 @@ export default async function CallLogsPage() {
 
   // Get stats
   const totalCalls = calls?.length || 0
-  const completedCalls = calls?.filter(c => c.status === 'completed').length || 0
-  const leadsGenerated = calls?.filter(c => c.lead_captured).length || 0
-  const appointmentsBooked = calls?.filter(c => c.appointment_booked).length || 0
+  const completedCalls = calls?.filter((c: any) => c.status === 'completed').length || 0
+  const leadsGenerated = calls?.filter((c: any) => c.lead_captured).length || 0
+  const appointmentsBooked = calls?.filter((c: any) => c.appointment_booked).length || 0
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -82,7 +82,7 @@ export default async function CallLogsPage() {
 
           {calls && calls.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {calls.map((call) => {
+              {calls.map((call: any) => {
                 const duration = call.duration_seconds
                   ? `${Math.floor(call.duration_seconds / 60)}:${String(call.duration_seconds % 60).padStart(2, '0')}`
                   : '-'

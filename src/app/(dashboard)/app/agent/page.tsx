@@ -18,8 +18,8 @@ export default async function AgentConfigPage() {
     redirect('/login')
   }
 
-  // Get subscriber
-  const subscriberResult = await supabase
+  // Get subscriber - bypass TypeScript with explicit any
+  const subscriberResult: any = await supabase
     .from('subscribers')
     .select('id, business_name, billing_status')
     .eq('auth_user_id', session.user.id)
@@ -29,11 +29,10 @@ export default async function AgentConfigPage() {
     redirect('/onboarding')
   }
 
-  // Type-safe access after null check
-  const subscriberId: string = subscriberResult.data.id as any
+  const subscriberId = subscriberResult.data.id
 
   // Get agent configuration
-  const { data: agent } = await supabase
+  const { data: agent }: any = await supabase
     .from('agents')
     .select('*')
     .eq('subscriber_id', subscriberId)

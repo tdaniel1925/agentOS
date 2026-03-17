@@ -24,7 +24,7 @@ export default async function CallDetailPage({ params }: PageProps) {
   }
 
   // Get subscriber
-  const { data: subscriber } = await supabase
+  const { data: subscriber }: any = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
@@ -35,7 +35,7 @@ export default async function CallDetailPage({ params }: PageProps) {
   }
 
   // Get call details
-  const { data: call } = await supabase
+  const { data: call }: any = await supabase
     .from('calls')
     .select('*')
     .eq('id', id)

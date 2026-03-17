@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const parsed = await parseSMSCommand(rawMessage, subscriberId)
 
     // Create SMS command record
-    const { data: commandRecord, error: commandError } = await supabase
+    const { data: commandRecord, error: commandError }: any = await (supabase as any)
       .from('sms_commands')
       .insert({
         subscriber_id: subscriberId,

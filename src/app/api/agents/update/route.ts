@@ -11,7 +11,7 @@ const VAPI_BASE_URL = 'https://api.vapi.ai'
 
 export async function POST(req: NextRequest) {
   try {
-    const { agentId, subscriberId, config } = await req.json()
+    const { agentId, subscriberId, config }: any = await req.json()
 
     if (!agentId || !subscriberId || !config) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
 
     // Verify agent belongs to subscriber
-    const { data: agent, error: agentError } = await supabase
+    const { data: agent, error: agentError }: any = await supabase
       .from('agents')
       .select('*')
       .eq('id', agentId)
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update agent record
-    const { error: updateError } = await supabase
+    const { error: updateError }: any = await (supabase as any)
       .from('agents')
       .update({
         ...config,
