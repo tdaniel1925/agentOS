@@ -58,12 +58,6 @@ export default function Step1BusinessInfo({ onBusinessSubmitted }: Step1Props) {
       address: formData.address.trim(),
       description: formData.description.trim(),
       formatted_address: formData.address.trim(),
-      hours: null,
-      rating: null,
-      review_count: null,
-      place_id: "", // Not using Google Places
-      latitude: 0,
-      longitude: 0,
     }
 
     onBusinessSubmitted(businessDetails)

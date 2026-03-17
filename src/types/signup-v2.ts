@@ -9,19 +9,14 @@ export interface BusinessDetails {
   website: string | null
   address: string
   description?: string  // User-provided business description
-  hours: object | null
-  rating: number | null
-  review_count: number | null
-  place_id: string
   formatted_address: string
-  latitude: number
-  longitude: number
-}
-
-export interface BusinessPrediction {
-  place_id: string
-  name: string
-  address: string
+  // Legacy fields kept for compatibility
+  hours?: object | null
+  rating?: number | null
+  review_count?: number | null
+  place_id?: string
+  latitude?: number
+  longitude?: number
 }
 
 export interface AudioSamples {
