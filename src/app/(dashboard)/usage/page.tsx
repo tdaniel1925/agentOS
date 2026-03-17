@@ -11,6 +11,8 @@ type UsageData = Database['public']['Tables']['subscriber_usage']['Row']
 type CallLog = Database['public']['Tables']['call_logs']['Row']
 type SmsLog = Database['public']['Tables']['sms_logs']['Row']
 
+export const dynamic = 'force-dynamic'
+
 export default async function UsagePage() {
   const supabase = createServiceClient()
 
