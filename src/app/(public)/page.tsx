@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Jordyn Landing Page - Modern Purple/Pink Design
  * Matches signup flow aesthetic
