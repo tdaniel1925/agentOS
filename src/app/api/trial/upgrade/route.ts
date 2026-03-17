@@ -107,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customerId = customer.id
 
       // Update subscriber with Stripe customer ID
-      await supabase
+      await (supabase as any)
         .from('subscribers')
         .update({ stripe_customer_id: customerId })
         .eq('id', subscriberId)

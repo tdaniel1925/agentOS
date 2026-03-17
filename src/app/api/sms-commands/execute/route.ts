@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
           body: parsed.clarificationQuestion || 'I need more information to complete that request.'
         })
 
-        await supabase
+        await (supabase as any)
           .from('sms_commands')
           .update({
             status: 'failed',
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             body: clarification
           })
 
-          await supabase
+          await (supabase as any)
             .from('sms_commands')
             .update({
               status: 'ambiguous',
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
           body: clarification
         })
 
-        await supabase
+        await (supabase as any)
           .from('sms_commands')
           .update({
             status: 'failed',
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
           body: `Failed to create call: ${callResult.error}`
         })
 
-        await supabase
+        await (supabase as any)
           .from('sms_commands')
           .update({
             status: 'failed',
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Update command record with success
-      await supabase
+      await (supabase as any)
         .from('sms_commands')
         .update({
           resolved_number: phoneNumber,
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
 
     // Handle other actions (stop, start, check_status, etc.)
     if (parsed.action === 'stop') {
-      await supabase
+      await (supabase as any)
         .from('control_states')
         .update({ mode: 'paused', paused_until: null })
         .eq('subscriber_id', subscriberId)
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (parsed.action === 'start') {
-      await supabase
+      await (supabase as any)
         .from('control_states')
         .update({ mode: 'full', paused_until: null })
         .eq('subscriber_id', subscriberId)
@@ -237,13 +237,13 @@ export async function POST(req: NextRequest) {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      const { data: todaysCalls } = await supabase
+      const { data: todaysCalls }: any = await (supabase as any)
         .from('calls')
         .select('id, status')
         .eq('subscriber_id', subscriberId)
         .gte('created_at', today.toISOString())
 
-      const completed = todaysCalls?.filter(c => c.status === 'completed').length || 0
+      const completed = todaysCalls?.filter((c: any) => c.status === 'completed').length || 0
       const total = todaysCalls?.length || 0
 
       await sendSMS({
