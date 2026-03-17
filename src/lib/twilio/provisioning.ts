@@ -47,7 +47,7 @@ export async function provisionSubscriberPhoneNumber(
       availableNumbers = await client.availablePhoneNumbers('US')
         .local
         .list({
-          areaCode,
+          areaCode: parseInt(areaCode, 10),
           smsEnabled: true,
           voiceEnabled: true,
           limit: 5
@@ -62,7 +62,7 @@ export async function provisionSubscriberPhoneNumber(
           availableNumbers = await client.availablePhoneNumbers('US')
             .local
             .list({
-              areaCode: nearbyCode,
+              areaCode: parseInt(nearbyCode, 10),
               smsEnabled: true,
               voiceEnabled: true,
               limit: 5

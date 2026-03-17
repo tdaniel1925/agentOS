@@ -54,7 +54,7 @@ export async function buyTwilioNumberWithA2P(options: {
   const availableNumbers = await client.availablePhoneNumbers('US')
     .local
     .list({
-      areaCode: options.areaCode,
+      areaCode: options.areaCode ? parseInt(options.areaCode, 10) : undefined,
       smsEnabled: true,
       limit: 1
     })
