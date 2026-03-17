@@ -422,7 +422,7 @@ async function importNumberToVAPI(
         twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
         name: `Jordan - ${subscriberId.substring(0, 8)}`,
         assistantId: assistantId,
-        serverUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/vapi`,
+        serverUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/vapi/call-ended`,
         serverUrlSecret: process.env.VAPI_WEBHOOK_SECRET
       })
     })
