@@ -54,7 +54,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let websiteContent
     if (business.website) {
       try {
-        websiteContent = await scrapeWebsite(business.website, {
+        // Normalize URL - add https:// if missing
+        let websiteUrl = business.website.trim()
+        if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+          websiteUrl = 'https://' + websiteUrl
+        }
+
+        websiteContent = await scrapeWebsite(websiteUrl, {
           timeout: 10000,
           maxPages: 5,
         })

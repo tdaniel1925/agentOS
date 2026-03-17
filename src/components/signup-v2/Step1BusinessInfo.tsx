@@ -147,14 +147,15 @@ export default function Step1BusinessInfo({ onBusinessSubmitted }: Step1Props) {
                 <Globe className="h-4 w-4 text-gray-400" />
               </div>
               <input
-                type="url"
+                type="text"
                 id="website"
                 value={formData.website}
                 onChange={(e) => handleChange("website", e.target.value)}
-                placeholder="e.g., https://joespizza.com"
+                placeholder="e.g., joespizza.com"
                 className="w-full pl-10 pr-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
               />
             </div>
+            <p className="mt-1 text-xs text-gray-500">Just enter your domain name - no need for https://</p>
           </div>
 
           {/* Address */}

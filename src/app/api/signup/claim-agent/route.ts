@@ -9,7 +9,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSubscriberFromOAuth, createSubscriberFromEmail } from '@/lib/auth/oauth-providers'
 import { sendEmail } from '@/lib/resend/client'
+import { buyVapiPhoneNumber } from '@/lib/vapi/client'
+import { sendSMS, formatPhoneNumber } from '@/lib/twilio/client'
+import { createServiceClient } from '@/lib/supabase/server'
+import Stripe from 'stripe'
 import type { BusinessDetails } from '@/types/signup-v2'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-11-20.acacia',
+})
 
 interface ClaimAgentRequest {
   // Auth method 1: Email/Password
@@ -143,9 +151,125 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       )
     }
 
+    // PROVISION PHONE NUMBER
+    let vapiPhoneNumber: string | null = null
+    let vapiPhoneNumberId: string | null = null
+
+    try {
+      console.log(`📞 Provisioning phone number for subscriber ${subscriberId}`)
+
+      // Extract area code from business phone
+      const businessPhone = business_data.business_phone || ''
+      const areaCode = businessPhone.replace(/\D/g, '').substring(0, 3)
+
+      const vapiPhone = await buyVapiPhoneNumber({
+        areaCode: areaCode || undefined,
+        name: `${business_data.business_name} - Jordyn`,
+        assistantId: assistant_id,
+      })
+
+      vapiPhoneNumber = vapiPhone.number
+      vapiPhoneNumberId = vapiPhone.id
+
+      // Update subscriber with phone number
+      const supabase = createServiceClient()
+      await (supabase as any)
+        .from('subscribers')
+        .update({
+          vapi_phone_number_id: vapiPhone.id,
+          vapi_phone_number: vapiPhone.number,
+        })
+        .eq('id', subscriberId)
+
+      console.log(`✅ Phone provisioned: ${vapiPhone.number}`)
+    } catch (phoneError) {
+      console.error('⚠️ Phone provisioning failed:', phoneError)
+      // Don't fail the whole signup - we can provision later
+    }
+
+    // CREATE STRIPE SUBSCRIPTION WITH 7-DAY TRIAL
+    try {
+      console.log(`💳 Creating Stripe subscription for ${userEmail}`)
+
+      // Create or get Stripe customer
+      let stripeCustomer
+      const existingCustomers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1
+      })
+
+      if (existingCustomers.data.length > 0) {
+        stripeCustomer = existingCustomers.data[0]
+      } else {
+        stripeCustomer = await stripe.customers.create({
+          email: userEmail,
+          name: userName,
+          metadata: {
+            subscriber_id: subscriberId,
+            business_name: business_data.business_name,
+          }
+        })
+      }
+
+      // Get the base product price ID from env
+      const priceId = process.env.STRIPE_PRICE_ID_BASE || 'price_1QpcX4HdUWxMuNL5YpQkKLEq' // $97/month
+
+      // Create subscription with 7-day trial
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomer.id,
+        items: [{ price: priceId }],
+        trial_period_days: 7,
+        metadata: {
+          subscriber_id: subscriberId,
+          business_name: business_data.business_name,
+          signup_flow: 'signup-v2',
+        },
+        payment_settings: {
+          save_default_payment_method: 'on_subscription',
+        },
+      })
+
+      // Update subscriber with Stripe details
+      const supabase = createServiceClient()
+      await (supabase as any)
+        .from('subscribers')
+        .update({
+          stripe_customer_id: stripeCustomer.id,
+          stripe_subscription_id: subscription.id,
+        })
+        .eq('id', subscriberId)
+
+      console.log(`✅ Stripe subscription created: ${subscription.id}`)
+    } catch (stripeError) {
+      console.error('⚠️ Stripe subscription creation failed:', stripeError)
+      // Don't fail signup - user can still use trial and we can add payment method later
+    }
+
+    // SEND WELCOME SMS
+    if (vapiPhoneNumber && business_data.business_phone) {
+      try {
+        await sendSMS({
+          to: formatPhoneNumber(business_data.business_phone),
+          body: `Welcome to Jordyn! 🎉
+
+Your AI receptionist is ready at ${vapiPhoneNumber}
+
+Forward your existing number to Jordyn or share this new number with clients. Text me anytime to give instructions!
+
+Try: "What can you do?"
+
+— Jordyn 💜`,
+        })
+        console.log('✅ Welcome SMS sent')
+      } catch (smsError) {
+        console.error('⚠️ Welcome SMS failed:', smsError)
+        // Don't fail signup
+      }
+    }
+
     // Send welcome email
     try {
-      await sendWelcomeEmail(userEmail, userName, business_data.name, trialEndsAt)
+      await sendWelcomeEmail(userEmail, userName, business_data.name, trialEndsAt, vapiPhoneNumber)
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError)
       // Don't fail the whole request if email fails
@@ -179,7 +303,8 @@ async function sendWelcomeEmail(
   email: string,
   name: string,
   businessName: string,
-  trialEndsAt: string
+  trialEndsAt: string,
+  phoneNumber?: string | null
 ): Promise<void> {
   const trialEndDate = new Date(trialEndsAt)
   const formattedDate = trialEndDate.toLocaleDateString('en-US', {
@@ -220,6 +345,14 @@ async function sendWelcomeEmail(
           Trial ends: <strong>${formattedDate}</strong>
         </p>
       </div>
+
+      ${phoneNumber ? `
+      <div style="background: linear-gradient(135deg, #9333ea, #ec4899); border-radius: 10px; padding: 25px; margin: 30px 0; text-align: center;">
+        <p style="color: white; font-size: 14px; margin: 0 0 10px 0; opacity: 0.9;">Your Jordyn Number</p>
+        <p style="color: white; font-size: 28px; font-weight: bold; margin: 0; letter-spacing: 1px;">${phoneNumber}</p>
+        <p style="color: white; font-size: 14px; margin: 15px 0 0 0; opacity: 0.9;">Forward your existing number here or share with clients!</p>
+      </div>
+      ` : ''}
 
       <h2 style="color: #1B3A7D; font-size: 20px; margin-top: 30px;">What's Next?</h2>
 

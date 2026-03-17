@@ -38,8 +38,8 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
       }
 
       const data = await response.json()
-      // Redirect to dashboard
-      window.location.href = "/dashboard"
+      // Redirect to app dashboard
+      window.location.href = "/app"
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.")
     } finally {
