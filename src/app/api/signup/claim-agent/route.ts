@@ -166,7 +166,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       // Provision Twilio number (voice + SMS) and auto-associate with A2P campaign
       const provisionedNumber = await provisionSubscriberPhoneNumber({
         areaCode: areaCode || undefined,
-        businessName: business_data.business_name,
+        businessName: business_data.name,
         subscriberId: subscriberId,
         vapiAssistantId: assistant_id, // For forwarding voice calls to VAPI
       })
@@ -193,7 +193,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       // Send admin alert
       await alertPhoneProvisioningFailure(
         subscriberId,
-        business_data.business_name,
+        business_data.name,
         phoneError instanceof Error ? phoneError.message : String(phoneError),
         1
       )
@@ -220,7 +220,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
           name: userName,
           metadata: {
             subscriber_id: subscriberId,
-            business_name: business_data.business_name,
+            business_name: business_data.name,
           }
         })
       }
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?payment_setup=cancelled`,
         metadata: {
           subscriber_id: subscriberId,
-          business_name: business_data.business_name,
+          business_name: business_data.name,
         },
       })
 
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
         trial_period_days: 7,
         metadata: {
           subscriber_id: subscriberId,
-          business_name: business_data.business_name,
+          business_name: business_data.name,
           signup_flow: 'signup-v2',
         },
         payment_settings: {
@@ -278,7 +278,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       // Send admin alert
       await alertStripeSubscriptionFailure(
         subscriberId,
-        business_data.business_name,
+        business_data.name,
         stripeError instanceof Error ? stripeError.message : String(stripeError)
       )
 
