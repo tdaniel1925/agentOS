@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       try {
         provisionedNumber = await provisionSubscriberPhoneNumber({
           areaCode: areaCode || undefined,
-          businessName: subscriber.business_name,
+          businessName: subscriber.name,
           subscriberId: subscriber_id,
           vapiAssistantId: subscriber.vapi_assistant_id,
         })
@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
 
           // Send admin alert
           await alertPhoneProvisioningFailure(
-            subscriberId,
-            subscriber.business_name,
+            subscriber_id,
+            subscriber.name,
             errorMessage,
             maxAttempts
           )
