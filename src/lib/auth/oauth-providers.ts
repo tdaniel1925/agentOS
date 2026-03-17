@@ -181,17 +181,15 @@ export async function createSubscriberFromEmail(
     google_review_count?: number
   }
 ): Promise<{ subscriber_id: string; trial_ends_at: string; auth_user_id: string }> {
-  const supabase = await createClient()
   const serviceSupabase = createServiceClient()
 
-  // Create auth user
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  // Create auth user using admin API (service role)
+  const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        name,
-      },
+    email_confirm: true, // Auto-confirm email
+    user_metadata: {
+      name,
     },
   })
 
