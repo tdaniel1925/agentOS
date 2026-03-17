@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
 
     // Find the call record by VAPI call ID
-    const { data: callRecord, error: findError } = await supabase
+    const { data: callRecord, error: findError }: any = await (supabase as any)
       .from('calls')
       .select('*, subscriber_id, agent_id')
       .eq('vapi_call_id', call.id)
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get subscriber info
-    const { data: subscriber } = await supabase
+    const { data: subscriber }: any = await (supabase as any)
       .from('subscribers')
       .select('control_phone, name')
       .eq('id', callRecord.subscriber_id)
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Save the notification message
-    await supabase
+    await (supabase as any)
       .from('messages')
       .insert({
         subscriber_id: callRecord.subscriber_id,
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
 
     // If lead was captured, create lead record
     if (analysis.leadCaptured && callRecord.contact_name) {
-      const { error: leadError } = await supabase
+      const { error: leadError }: any = await (supabase as any)
         .from('leads')
         .insert({
           subscriber_id: callRecord.subscriber_id,
