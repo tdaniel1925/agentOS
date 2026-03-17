@@ -158,13 +158,12 @@ export default function HomePage() {
                 </div>
 
                 <h1 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight mb-6" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
-                  Never Miss a
-                  <span className="gradient-text block">Business Call</span>
-                  Again.
+                  When answering calls
+                  <span className="gradient-text block">just isn't enough.</span>
                 </h1>
 
                 <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-                  <span className="font-semibold text-brand-700">Jordyn.</span> is your AI-powered phone receptionist that answers calls 24/7, books appointments, and handles customer inquiries — trained specifically on your business. All for just <strong className="text-brand-700">$97/month</strong>.
+                  <span className="font-semibold text-brand-700">Jordyn.</span> doesn't just answer calls — she makes them too. Just send a text message and Jordyn handles the entire conversation for you. Forward your cell phone in seconds (we'll show you how), and let Jordyn manage both incoming and outgoing calls 24/7. All for just <strong className="text-brand-700">$97/month</strong>.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
