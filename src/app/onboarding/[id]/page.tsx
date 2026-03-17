@@ -51,6 +51,22 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [pollCount, setPollCount] = useState(0)
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null)
+
+  // Check for payment status in URL
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const payment = urlParams.get('payment')
+
+    if (payment) {
+      setPaymentStatus(payment)
+      // Clear the URL parameter
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [])
 
   // Fetch subscriber data
   useEffect(() => {
@@ -197,10 +213,41 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   // Choose number state
   if (state === 'choose_number' && subscriber) {
     return (
-      <NumberChooser
-        subscriberId={subscriber.id}
-        onComplete={handleComplete}
-      />
+      <>
+        {/* Payment status banners */}
+        {paymentStatus === 'cancelled' && (
+          <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4">
+            <div className="max-w-6xl mx-auto flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-yellow-900">Payment Cancelled</p>
+                <p className="text-sm text-yellow-800">
+                  No charge was made. Select a number and try again when you're ready.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {paymentStatus === 'success' && (
+          <div className="bg-green-50 border-b border-green-200 px-6 py-4">
+            <div className="max-w-6xl mx-auto flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="font-semibold text-green-900">Payment Successful!</p>
+                <p className="text-sm text-green-800">
+                  Your phone number is being set up now. This takes about 30 seconds...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <NumberChooser
+          subscriberId={subscriber.id}
+          onComplete={handleComplete}
+        />
+      </>
     )
   }
 
