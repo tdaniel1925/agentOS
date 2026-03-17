@@ -63,8 +63,8 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
     setError(null)
 
     try {
-      // Step 1: Create Stripe Checkout session for $15 setup fee
-      const checkoutRes = await fetch('/api/stripe/setup-fee-checkout', {
+      // Provision the phone number directly (setup fee already paid)
+      const provisionRes = await fetch('/api/phone-numbers/provision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,13 +74,13 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         })
       })
 
-      const checkoutData = await checkoutRes.json()
-      if (!checkoutRes.ok) throw new Error(checkoutData.error || 'Failed to create checkout')
+      const provisionData = await provisionRes.json()
+      if (!provisionRes.ok) throw new Error(provisionData.error || 'Failed to provision number')
 
-      // Step 2: Redirect to Stripe Checkout
-      window.location.href = checkoutData.url
+      // Success - call onComplete callback
+      onComplete()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start checkout')
+      setError(err instanceof Error ? err.message : 'Failed to provision number')
       setIsProvisioning(false)
     }
   }
@@ -201,11 +201,11 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
                     disabled={isProvisioning}
                     className="w-full bg-[#1B3A7D] text-white py-3 rounded-lg font-semibold disabled:opacity-50 hover:bg-[#152d63] mb-3"
                   >
-                    {isProvisioning ? 'Provisioning...' : 'Get This Number ($15)'}
+                    {isProvisioning ? 'Provisioning...' : 'Get This Number'}
                   </button>
 
                   <div className="text-xs text-gray-600 text-center mb-4">
-                    💳 One-time $15 setup fee
+                    Setup fee already paid
                   </div>
 
                   <div className="border-t pt-4">

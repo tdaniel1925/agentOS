@@ -112,7 +112,7 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
         return
       }
 
-      // Update subscriber with Stripe details
+      // Update subscriber with Stripe details and mark setup fee as paid
       await (supabase as any)
         .from('subscribers')
         .update({
@@ -120,6 +120,9 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
           stripe_subscription_id: subscriptionId,
           billing_status: 'active',
           status: 'active',
+          setup_fee_paid: true,
+          setup_fee_amount: 15.00,
+          setup_fee_paid_at: new Date().toISOString(),
         })
         .eq('id', subscriber.id)
 

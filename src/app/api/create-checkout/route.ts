@@ -56,9 +56,21 @@ export async function POST(req: NextRequest) {
         .eq('id', subscriberId)
     }
 
+    // Create invoice item for setup fee
+    // This will be automatically added to the first subscription invoice
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      amount: 1500, // $15.00 in cents
+      currency: 'usd',
+      description: 'Phone Number Setup Fee',
+    })
+
     // Create checkout session with subscription + setup fee
     // First invoice will be $112 ($97 subscription + $15 setup fee)
     // Subsequent invoices will be $97/month
+    //
+    // Note: We use payment mode with a subscription after payment completes
+    // This allows us to charge the combined amount upfront
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
@@ -72,21 +84,9 @@ export async function POST(req: NextRequest) {
         metadata: {
           subscriber_id: subscriberId,
         },
-        // Add setup fee to first invoice via add_invoice_items
-        add_invoice_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: 'Phone Number Setup Fee',
-                description: 'One-time fee for phone number provisioning',
-              },
-              unit_amount: 1500, // $15.00 in cents
-            },
-            quantity: 1,
-          },
-        ],
       },
+      // Add setup fee by creating an invoice item that will be added to the first invoice
+      // We do this by creating the invoice item before the session, attached to the customer
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/welcome?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup?cancelled=true`,
       metadata: {
