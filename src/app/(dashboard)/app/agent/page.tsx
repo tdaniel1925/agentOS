@@ -29,7 +29,8 @@ export default async function AgentConfigPage() {
     redirect('/onboarding')
   }
 
-  const subscriberId = subscriberResult.data.id
+  // Type-safe access after null check
+  const subscriberId: string = subscriberResult.data.id as any
 
   // Get agent configuration
   const { data: agent } = await supabase
