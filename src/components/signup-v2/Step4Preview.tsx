@@ -20,7 +20,11 @@ function AudioPlayer({ label, description, audioUrl }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(0)
+  const [error, setError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+
+  // Debug: Log audio URL
+  console.log(`Audio URL for ${label}:`, audioUrl)
 
   const togglePlay = () => {
     if (!audioRef.current) return
@@ -48,6 +52,26 @@ function AudioPlayer({ label, description, audioUrl }: AudioPlayerProps) {
   const handleEnded = () => {
     setIsPlaying(false)
     setCurrentTime(0)
+  }
+
+  const handleError = () => {
+    setError('Failed to load audio')
+    setIsPlaying(false)
+  }
+
+  // Check if audio URL is valid
+  if (!audioUrl || audioUrl === '') {
+    return (
+      <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-semibold text-sm text-gray-900 mb-0.5">{label}</h3>
+            <p className="text-xs text-gray-600">{description}</p>
+            <p className="text-xs text-yellow-700 mt-2">Audio preview is being generated...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const formatTime = (time: number) => {
@@ -94,7 +118,12 @@ function AudioPlayer({ label, description, audioUrl }: AudioPlayerProps) {
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
+        onError={handleError}
       />
+
+      {error && (
+        <p className="text-xs text-red-600 mt-2">{error}</p>
+      )}
     </div>
   )
 }

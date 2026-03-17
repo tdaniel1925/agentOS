@@ -118,12 +118,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const assistant = await createVapiAssistant(assistantConfig)
 
     // Step 4: Generate audio previews with ElevenLabs
-    console.log('Generating audio previews...')
-    const audioBuffers = await generateAudioPreviews(business)
+    console.log('Generating audio previews for:', business.name)
+    let audioUrls
+    try {
+      const audioBuffers = await generateAudioPreviews(business)
+      console.log('Audio buffers generated successfully')
 
-    // Step 5: Upload audio files to Supabase Storage
-    console.log('Uploading audio previews to storage...')
-    const audioUrls = await uploadAudioPreviews(audioBuffers, assistant.id)
+      // Step 5: Upload audio files to Supabase Storage
+      console.log('Uploading audio previews to storage...')
+      audioUrls = await uploadAudioPreviews(audioBuffers, assistant.id)
+      console.log('Audio URLs generated:', audioUrls)
+    } catch (audioError) {
+      console.error('Audio generation/upload failed:', audioError)
+      // Return placeholder URLs if audio generation fails
+      audioUrls = {
+        greeting: '',
+        message: '',
+        faq: ''
+      }
+    }
 
     // Calculate elapsed time and add delay if needed
     // We want the total process to feel like it takes 15-20 seconds
