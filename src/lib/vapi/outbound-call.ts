@@ -111,7 +111,7 @@ export async function createOutboundCall(params: OutboundCallParams): Promise<{
     const supabase = createServiceClient()
 
     // Get subscriber and agent info
-    const { data: subscriber, error: subError } = await supabase
+    const { data: subscriber, error: subError }: any = await (supabase as any)
       .from('subscribers')
       .select('*')
       .eq('id', params.subscriberId)
@@ -122,7 +122,7 @@ export async function createOutboundCall(params: OutboundCallParams): Promise<{
     }
 
     // Get agent configuration
-    const { data: agent, error: agentError } = await supabase
+    const { data: agent, error: agentError }: any = await (supabase as any)
       .from('agents')
       .select('*')
       .eq('subscriber_id', params.subscriberId)
@@ -189,7 +189,7 @@ export async function createOutboundCall(params: OutboundCallParams): Promise<{
     const vapiCall: VAPIOutboundCallResponse = await response.json()
 
     // Create call record in database
-    const { data: callRecord, error: callError } = await supabase
+    const { data: callRecord, error: callError }: any = await (supabase as any)
       .from('calls')
       .insert({
         subscriber_id: params.subscriberId,
