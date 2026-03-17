@@ -14,7 +14,7 @@ import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, phone, url_ref } = await req.json()
+    const { name, email, password, phone, url_ref, business_name, business_type, bot_name } = await req.json()
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -58,6 +58,9 @@ export async function POST(req: NextRequest) {
         name,
         email,
         phone: phone || null,
+        business_name: business_name || null,
+        business_type: business_type || null,
+        bot_name: bot_name || 'Jordan',
         status: 'pending',
       })
       .select('id')
@@ -96,6 +99,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       user: authData.user,
+      subscriber_id: subscriber.id,
       attribution: {
         rep_code: attribution.rep_code,
         source: attribution.attribution_source

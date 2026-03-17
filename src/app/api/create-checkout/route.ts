@@ -56,20 +56,43 @@ export async function POST(req: NextRequest) {
         .eq('id', subscriberId)
     }
 
-    // Create checkout session
+    // Create checkout session with subscription + setup fee
+    // First invoice will be $112 ($97 subscription + $15 setup fee)
+    // Subsequent invoices will be $97/month
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: [
         {
-          price: priceId,
+          price: priceId, // $97/month recurring subscription
           quantity: 1,
         },
       ],
+      subscription_data: {
+        metadata: {
+          subscriber_id: subscriberId,
+        },
+        // Add setup fee to first invoice via add_invoice_items
+        add_invoice_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Phone Number Setup Fee',
+                description: 'One-time fee for phone number provisioning',
+              },
+              unit_amount: 1500, // $15.00 in cents
+            },
+            quantity: 1,
+          },
+        ],
+      },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/welcome?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboard?cancelled=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup?cancelled=true`,
       metadata: {
         subscriber_id: subscriberId,
+        includes_setup_fee: 'true',
+        setup_fee_amount: '15.00',
       },
     })
 
