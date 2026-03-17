@@ -14,11 +14,11 @@ const supabase = createClient(
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json()
-    const { subscriberId, phoneNumber, areaCode } = body
+    const { subscriberId, phoneNumber, areaCode, businessPhone } = body
 
-    if (!subscriberId || !phoneNumber || !areaCode) {
+    if (!subscriberId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'subscriberId is required' },
         { status: 400 }
       )
     }
@@ -36,12 +36,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const result = await provisionPhoneNumber(subscriberId, phoneNumber, areaCode)
+    // Auto-assignment mode: only subscriberId and optional businessPhone needed
+    // Manual mode (legacy): subscriberId, phoneNumber, and areaCode required
+    const result = await provisionPhoneNumber(
+      subscriberId,
+      businessPhone,
+      phoneNumber,
+      areaCode
+    )
 
     return NextResponse.json({
       success: true,
       phoneNumber: result.phoneNumber,
-      vapiAssistantId: result.vapiAssistantId
+      vapiAssistantId: result.vapiAssistantId,
+      autoAssigned: !phoneNumber
     })
   } catch (error: unknown) {
     console.error('Provisioning error:', error)

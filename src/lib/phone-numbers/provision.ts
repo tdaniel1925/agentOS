@@ -48,6 +48,73 @@ export interface ProvisionResult {
 // =====================================================
 
 /**
+ * Extract area code from phone number
+ * Supports formats: (214) 555-1234, 214-555-1234, 2145551234, +12145551234
+ */
+export function extractAreaCode(phoneNumber: string): string | null {
+  // Remove all non-digit characters
+  const digits = phoneNumber.replace(/\D/g, '')
+
+  // Handle US numbers (10 or 11 digits)
+  if (digits.length === 10) {
+    return digits.substring(0, 3)
+  }
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return digits.substring(1, 4)
+  }
+
+  return null
+}
+
+/**
+ * Get nearby area codes for fallback
+ * If primary area code has no numbers, try these
+ */
+export function getNearbyAreaCodes(areaCode: string): string[] {
+  const nearbyMap: Record<string, string[]> = {
+    // Dallas area
+    '214': ['469', '972'],
+    '469': ['214', '972'],
+    '972': ['214', '469'],
+
+    // Houston area
+    '713': ['281', '832'],
+    '281': ['713', '832'],
+    '832': ['713', '281'],
+
+    // Austin area
+    '512': ['737'],
+    '737': ['512'],
+
+    // San Antonio area
+    '210': ['726'],
+    '726': ['210'],
+
+    // Los Angeles area
+    '213': ['323', '310'],
+    '323': ['213', '310'],
+    '310': ['213', '323'],
+
+    // New York area
+    '212': ['646', '917'],
+    '646': ['212', '917'],
+    '917': ['212', '646'],
+
+    // Chicago area
+    '312': ['773', '872'],
+    '773': ['312', '872'],
+    '872': ['312', '773'],
+
+    // Miami area
+    '305': ['786', '754'],
+    '786': ['305', '754'],
+    '754': ['305', '786'],
+  }
+
+  return nearbyMap[areaCode] || []
+}
+
+/**
  * Search for available Twilio phone numbers in a specific area code
  */
 export async function searchAvailableNumbers(
@@ -82,6 +149,91 @@ export async function searchAvailableNumbers(
     console.error('   Error details:', JSON.stringify(error, null, 2))
     throw new Error(`Failed to load available numbers: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
+}
+
+/**
+ * Search for available phone number with area code preference
+ * Automatically searches primary area code, then nearby codes, then any US number
+ */
+export async function searchWithAreaCodeFallback(
+  businessPhone: string
+): Promise<string> {
+  console.log(`🔍 Auto-searching for phone number based on business phone: ${businessPhone}`)
+
+  // Extract area code from business phone
+  const primaryAreaCode = extractAreaCode(businessPhone)
+
+  if (!primaryAreaCode) {
+    console.warn(`⚠️  Could not extract area code from ${businessPhone}, using any US number`)
+    const anyNumbers = await twilioClient
+      .availablePhoneNumbers('US')
+      .local
+      .list({ limit: 1 })
+
+    if (anyNumbers.length === 0) {
+      throw new Error('No phone numbers available')
+    }
+
+    console.log(`✅ Selected: ${anyNumbers[0].phoneNumber} (any US area)`)
+    return anyNumbers[0].phoneNumber
+  }
+
+  console.log(`   Primary area code: ${primaryAreaCode}`)
+
+  // Try primary area code
+  try {
+    const primaryNumbers = await twilioClient
+      .availablePhoneNumbers('US')
+      .local
+      .list({
+        areaCode: primaryAreaCode,
+        limit: 1
+      })
+
+    if (primaryNumbers.length > 0) {
+      console.log(`✅ Found number in primary area code ${primaryAreaCode}: ${primaryNumbers[0].phoneNumber}`)
+      return primaryNumbers[0].phoneNumber
+    }
+  } catch (error) {
+    console.warn(`   No numbers in primary area code ${primaryAreaCode}`)
+  }
+
+  // Try nearby area codes
+  const nearbyAreaCodes = getNearbyAreaCodes(primaryAreaCode)
+  console.log(`   Trying nearby area codes: ${nearbyAreaCodes.join(', ')}`)
+
+  for (const areaCode of nearbyAreaCodes) {
+    try {
+      const nearbyNumbers = await twilioClient
+        .availablePhoneNumbers('US')
+        .local
+        .list({
+          areaCode: areaCode,
+          limit: 1
+        })
+
+      if (nearbyNumbers.length > 0) {
+        console.log(`✅ Found number in nearby area code ${areaCode}: ${nearbyNumbers[0].phoneNumber}`)
+        return nearbyNumbers[0].phoneNumber
+      }
+    } catch (error) {
+      console.warn(`   No numbers in area code ${areaCode}`)
+    }
+  }
+
+  // Fallback: any US number
+  console.log(`   No numbers in primary or nearby area codes, using any US number`)
+  const anyNumbers = await twilioClient
+    .availablePhoneNumbers('US')
+    .local
+    .list({ limit: 1 })
+
+  if (anyNumbers.length === 0) {
+    throw new Error('No phone numbers available in any area code')
+  }
+
+  console.log(`✅ Selected: ${anyNumbers[0].phoneNumber} (fallback - any US area)`)
+  return anyNumbers[0].phoneNumber
 }
 
 /**
@@ -298,19 +450,20 @@ async function importNumberToVAPI(
 
 /**
  * Complete phone number provisioning flow:
- * 1. Purchase from Twilio
- * 2. Create VAPI assistant
- * 3. Import to VAPI
- * 4. Store in database
- * 5. Initialize usage tracking
+ * 1. Auto-select number based on business phone area code
+ * 2. Purchase from Twilio
+ * 3. Create VAPI assistant
+ * 4. Import to VAPI
+ * 5. Store in database
+ * 6. Initialize usage tracking
  */
 export async function provisionPhoneNumber(
   subscriberId: string,
-  selectedPhoneNumber: string,
-  areaCode: string
+  businessPhone?: string,
+  selectedPhoneNumber?: string,
+  areaCode?: string
 ): Promise<ProvisionResult> {
   console.log(`\n🚀 Starting phone provisioning for subscriber ${subscriberId}`)
-  console.log(`   Selected number: ${selectedPhoneNumber}`)
 
   try {
     // Get subscriber data
@@ -336,23 +489,47 @@ export async function provisionPhoneNumber(
       throw new Error('Subscriber already has an active phone number')
     }
 
-    // Step 1: Purchase from Twilio
+    // Step 1: Auto-select or use provided phone number
+    let phoneNumberToProvision: string
+    let finalAreaCode: string
+
+    if (selectedPhoneNumber && areaCode) {
+      // Manual selection (legacy flow)
+      console.log(`   Using manually selected number: ${selectedPhoneNumber}`)
+      phoneNumberToProvision = selectedPhoneNumber
+      finalAreaCode = areaCode
+    } else {
+      // Auto-assignment based on business phone
+      const phoneForSearch = businessPhone || subscriber.phone
+      if (!phoneForSearch) {
+        throw new Error('No business phone provided for auto-assignment')
+      }
+
+      console.log(`   Auto-assigning based on business phone: ${phoneForSearch}`)
+      phoneNumberToProvision = await searchWithAreaCodeFallback(phoneForSearch)
+      const extractedAreaCode = extractAreaCode(phoneNumberToProvision)
+      finalAreaCode = extractedAreaCode || '000'
+    }
+
+    console.log(`   Selected number: ${phoneNumberToProvision}`)
+
+    // Step 2: Purchase from Twilio
     const { phoneNumber, twilioSid } = await purchaseTwilioNumber(
-      selectedPhoneNumber,
+      phoneNumberToProvision,
       subscriberId
     )
 
-    // Step 2: Create VAPI assistant
+    // Step 3: Create VAPI assistant
     const assistantId = await createVAPIAssistant(subscriberId, subscriber)
 
-    // Step 3: Import to VAPI
+    // Step 4: Import to VAPI
     const { vapiPhoneNumberId } = await importNumberToVAPI(
       phoneNumber,
       subscriberId,
       assistantId
     )
 
-    // Step 4: Store in database
+    // Step 5: Store in database
     const { data: phoneNumberRecord, error: insertError } = await supabase
       .from('subscriber_phone_numbers')
       .insert({
@@ -362,7 +539,7 @@ export async function provisionPhoneNumber(
         twilio_sid: twilioSid,
         provider: 'twilio',
         number_type: 'local',
-        area_code: areaCode,
+        area_code: finalAreaCode,
         vapi_assistant_id: assistantId,
         status: 'active',
         assigned_at: new Date().toISOString()
@@ -374,7 +551,7 @@ export async function provisionPhoneNumber(
       throw new Error(`Database error: ${insertError.message}`)
     }
 
-    // Step 5: Initialize usage tracking
+    // Step 6: Initialize usage tracking
     const billingPeriodStart = new Date()
     const billingPeriodEnd = new Date()
     billingPeriodEnd.setMonth(billingPeriodEnd.getMonth() + 1)
@@ -403,7 +580,9 @@ export async function provisionPhoneNumber(
           twilio_sid: twilioSid,
           vapi_phone_number_id: vapiPhoneNumberId,
           vapi_assistant_id: assistantId,
-          area_code: areaCode
+          area_code: finalAreaCode,
+          auto_assigned: !selectedPhoneNumber,
+          business_phone: businessPhone || subscriber.phone
         }
       })
 
@@ -411,7 +590,8 @@ export async function provisionPhoneNumber(
     console.log(`   Phone: ${phoneNumber}`)
     console.log(`   VAPI Phone ID: ${vapiPhoneNumberId}`)
     console.log(`   VAPI Assistant ID: ${assistantId}`)
-    console.log(`   Twilio SID: ${twilioSid}\n`)
+    console.log(`   Twilio SID: ${twilioSid}`)
+    console.log(`   Auto-assigned: ${!selectedPhoneNumber}\n`)
 
     return {
       phoneNumber,
