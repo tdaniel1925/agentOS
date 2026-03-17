@@ -7,7 +7,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { scrapeWebsite } from '@/lib/scraping/website-scraper'
 import { generateSystemPrompt } from '@/lib/ai/prompt-generator'
 import { createVapiAssistant } from '@/lib/vapi/client'
-import { BusinessDetails } from '@/types/signup-v2'
+import { BusinessDetails, AudioSamples } from '@/types/signup-v2'
+import { generateAudioPreviews } from '@/lib/vapi/audio-preview'
+import { uploadAudioPreviews } from '@/lib/storage/audio-storage'
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://theapexbots.com'
@@ -19,6 +21,7 @@ interface TrainAgentRequest {
 interface TrainAgentResponse {
   assistant_id: string
   training_complete: boolean
+  audio_samples: AudioSamples
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -114,6 +117,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const assistant = await createVapiAssistant(assistantConfig)
 
+    // Step 4: Generate audio previews with ElevenLabs
+    console.log('Generating audio previews...')
+    const audioBuffers = await generateAudioPreviews(business)
+
+    // Step 5: Upload audio files to Supabase Storage
+    console.log('Uploading audio previews to storage...')
+    const audioUrls = await uploadAudioPreviews(audioBuffers, assistant.id)
+
     // Calculate elapsed time and add delay if needed
     // We want the total process to feel like it takes 15-20 seconds
     const elapsedTime = Date.now() - startTime
@@ -125,10 +136,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await new Promise((resolve) => setTimeout(resolve, remainingTime))
     }
 
-    // Return success response
+    // Return success response with audio samples
+    const audioSamples: AudioSamples = {
+      greeting: audioUrls.greeting,
+      message: audioUrls.message,
+      faq: audioUrls.faq,
+    }
+
     const response: TrainAgentResponse = {
       assistant_id: assistant.id,
       training_complete: true,
+      audio_samples: audioSamples,
     }
 
     return NextResponse.json(response, { status: 200 })
