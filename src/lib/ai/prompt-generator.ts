@@ -65,7 +65,7 @@ Always collect:
 ### Contact Information
 ${business.phone ? `Phone: ${business.phone}` : 'Available upon request'}
 ${business.website ? `Website: ${business.website}` : ''}
-${content.contact_info && (content.contact_info as any).email ? `Email: ${(content.contact_info as any).email}` : ''}
+${content && content.contact_info && (content.contact_info as any).email ? `Email: ${(content.contact_info as any).email}` : ''}
 
 ## TONE & PERSONALITY
 
