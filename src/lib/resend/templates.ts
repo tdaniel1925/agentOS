@@ -64,8 +64,8 @@ export function welcomeEmail(params: WelcomeEmailParams): {
             <p style="margin-top: 20px;">Questions? Just reply to this email.</p>
 
             <p style="margin-top: 30px;">
-              — The AgentOS Team<br>
-              <a href="https://theapexbots.com" style="color: #1B3A7D;">theapexbots.com</a>
+              — The Jordyn Team<br>
+              <a href="https://jordyn.app" style="color: #1B3A7D;">jordyn.app</a>
             </p>
           </div>
         </body>
@@ -89,8 +89,8 @@ Your first weekly report will arrive Monday morning.
 
 Questions? Just reply to this email.
 
-— The AgentOS Team
-theapexbots.com`,
+— The Jordyn Team
+jordyn.app`,
   }
 }
 
