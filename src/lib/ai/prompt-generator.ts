@@ -10,10 +10,10 @@ import { BusinessDetails, WebsiteContent } from '@/types/signup-v2'
  */
 export function generateSystemPrompt(
   business: BusinessDetails,
-  content: WebsiteContent
+  content: WebsiteContent | null
 ): string {
   const businessName = business.name
-  const hasWebsiteContent = content.about || content.services.length > 0 || content.faqs.length > 0
+  const hasWebsiteContent = content && (content.about || content.services.length > 0 || content.faqs.length > 0)
 
   // Build the system prompt with business-specific information
   const prompt = `You are Jordyn, the AI assistant for ${businessName}. You handle phone calls, text messages, and customer inquiries with professionalism and expertise.
@@ -27,7 +27,7 @@ ${business.website ? `**Website:** ${business.website}` : ''}
 ${business.hours ? `**Business Hours:** ${formatBusinessHours(business.hours)}` : ''}
 ${business.rating ? `**Google Rating:** ${business.rating}/5 (${business.review_count || 0} reviews)` : ''}
 
-${generateAboutSection(businessName, content)}
+${generateAboutSection(businessName, content, business.description)}
 
 ${generateServicesSection(content)}
 
@@ -122,23 +122,32 @@ Remember: You represent ${businessName}. Every interaction is an opportunity to 
 /**
  * Generate the About section
  */
-function generateAboutSection(businessName: string, content: WebsiteContent): string {
-  if (!content.about) {
+function generateAboutSection(businessName: string, content: WebsiteContent | null, businessDescription?: string): string {
+  // Use scraped website content if available
+  if (content && content.about) {
     return `## ABOUT ${businessName.toUpperCase()}
 
-${businessName} is committed to providing excellent service to our customers.`
+${content.about}`
   }
 
+  // Use business description from signup form
+  if (businessDescription) {
+    return `## ABOUT ${businessName.toUpperCase()}
+
+${businessDescription}`
+  }
+
+  // Fallback to default message
   return `## ABOUT ${businessName.toUpperCase()}
 
-${content.about}`
+${businessName} is committed to providing excellent service to our customers.`
 }
 
 /**
  * Generate the Services section
  */
-function generateServicesSection(content: WebsiteContent): string {
-  if (!content.services || content.services.length === 0) {
+function generateServicesSection(content: WebsiteContent | null): string {
+  if (!content || !content.services || content.services.length === 0) {
     return ''
   }
 
@@ -154,8 +163,8 @@ When asked about services, reference this list and offer to schedule a consultat
 /**
  * Generate the FAQ section
  */
-function generateFAQSection(content: WebsiteContent): string {
-  if (!content.faqs || content.faqs.length === 0) {
+function generateFAQSection(content: WebsiteContent | null): string {
+  if (!content || !content.faqs || content.faqs.length === 0) {
     return ''
   }
 

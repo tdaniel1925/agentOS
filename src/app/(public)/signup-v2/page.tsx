@@ -3,11 +3,10 @@
 import { useState } from "react"
 import { BusinessDetails, AudioSamples } from "@/types/signup-v2"
 import SignupLayout from "@/components/signup-v2/SignupLayout"
-import Step1GoogleLookup from "@/components/signup-v2/Step1GoogleLookup"
-import Step2ConfirmBusiness from "@/components/signup-v2/Step2ConfirmBusiness"
-import Step3Training from "@/components/signup-v2/Step3Training"
-import Step4Preview from "@/components/signup-v2/Step4Preview"
-import Step5CreateAccount from "@/components/signup-v2/Step5CreateAccount"
+import Step1BusinessInfo from "@/components/signup-v2/Step1BusinessInfo"
+import Step2Training from "@/components/signup-v2/Step3Training"
+import Step3Preview from "@/components/signup-v2/Step4Preview"
+import Step4CreateAccount from "@/components/signup-v2/Step5CreateAccount"
 import ProgressIndicator from "@/components/signup-v2/ProgressIndicator"
 
 export default function SignupV2Page() {
@@ -16,61 +15,43 @@ export default function SignupV2Page() {
   const [assistantId, setAssistantId] = useState<string | null>(null)
   const [audioSamples, setAudioSamples] = useState<AudioSamples | null>(null)
 
-  const handleBusinessSelected = (business: BusinessDetails) => {
+  const handleBusinessSubmitted = (business: BusinessDetails) => {
     setBusinessDetails(business)
     setCurrentStep(2)
-  }
-
-  const handleBusinessConfirmed = () => {
-    setCurrentStep(3)
   }
 
   const handleTrainingComplete = (assistant_id: string, audio: AudioSamples) => {
     setAssistantId(assistant_id)
     setAudioSamples(audio)
-    setCurrentStep(4)
+    setCurrentStep(3)
   }
 
   const handleClaimAgent = () => {
-    setCurrentStep(5)
-  }
-
-  const handleGoBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
+    setCurrentStep(4)
   }
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1GoogleLookup onBusinessSelected={handleBusinessSelected} />
+        return <Step1BusinessInfo onBusinessSubmitted={handleBusinessSubmitted} />
       case 2:
         return (
-          <Step2ConfirmBusiness
-            business={businessDetails!}
-            onConfirm={handleBusinessConfirmed}
-            onGoBack={handleGoBack}
-          />
-        )
-      case 3:
-        return (
-          <Step3Training
+          <Step2Training
             business={businessDetails!}
             onTrainingComplete={handleTrainingComplete}
           />
         )
-      case 4:
+      case 3:
         return (
-          <Step4Preview
+          <Step3Preview
             business={businessDetails!}
             audioSamples={audioSamples!}
             onClaimAgent={handleClaimAgent}
           />
         )
-      case 5:
+      case 4:
         return (
-          <Step5CreateAccount
+          <Step4CreateAccount
             assistantId={assistantId!}
             businessDetails={businessDetails!}
           />
@@ -82,7 +63,7 @@ export default function SignupV2Page() {
 
   return (
     <SignupLayout>
-      <ProgressIndicator current={currentStep} total={5} />
+      <ProgressIndicator current={currentStep} total={4} />
       <div className="mt-8">{renderStep()}</div>
     </SignupLayout>
   )

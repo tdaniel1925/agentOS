@@ -8,6 +8,7 @@ export interface BusinessDetails {
   phone: string | null
   website: string | null
   address: string
+  description?: string  // User-provided business description
   hours: object | null
   rating: number | null
   review_count: number | null
