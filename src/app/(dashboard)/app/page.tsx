@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import UsageDashboard from '@/components/UsageDashboard'
+import TrialBanner from '@/components/dashboard/TrialBanner'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -74,6 +75,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Trial Banner - Show for trialing users */}
+      {subscriber.billing_status === 'trialing' && subscriber.trial_ends_at && (
+        <TrialBanner
+          trialEndsAt={subscriber.trial_ends_at}
+          businessName={subscriber.business_name}
+          botName={subscriber.bot_name}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">

@@ -112,6 +112,10 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
         return
       }
 
+      // Check if this is a trial conversion
+      const isTrialConversion = session.metadata?.converted_from_trial === 'true'
+      const wasTrialing = subscriber.billing_status === 'trialing'
+
       // Update subscriber with Stripe details and mark setup fee as paid
       await (supabase as any)
         .from('subscribers')
@@ -125,6 +129,28 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
           setup_fee_paid_at: new Date().toISOString(),
         })
         .eq('id', subscriber.id)
+
+      // If this was a trial conversion, update trial_conversions table
+      if (isTrialConversion || wasTrialing) {
+        await (supabase as any)
+          .from('trial_conversions')
+          .update({
+            converted: true,
+            converted_at: new Date().toISOString(),
+            plan_selected: 'agentos_base',
+            trial_ended_at: new Date().toISOString(),
+          })
+          .eq('subscriber_id', subscriber.id)
+          .eq('converted', false)
+
+        // Log the successful conversion
+        await (supabase as any).from('commands_log').insert({
+          subscriber_id: subscriber.id,
+          skill_triggered: 'trial-converted',
+          raw_message: 'Trial successfully converted to paid subscription',
+          success: true,
+        })
+      }
 
       // Record idempotency
       await (supabase as any).from('upgrade_events').insert({
