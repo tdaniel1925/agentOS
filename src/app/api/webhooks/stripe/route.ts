@@ -62,6 +62,12 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       // New subscriber paid successfully
       const session = event.data.object as Stripe.Checkout.Session
 
+      // Handle payment method setup (setup mode) - payment method collection during trial
+      if (session.mode === 'setup') {
+        await handlePaymentMethodSetup(session, event.id, supabase)
+        return
+      }
+
       // Handle setup fee payment (one-time payment for phone number)
       if (session.metadata?.type === 'setup_fee') {
         await handleSetupFeePayment(session, event.id, supabase)
@@ -358,6 +364,96 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
     default:
       console.log(`Unhandled event type: ${event.type}`)
   }
+}
+
+/**
+ * Handle payment method setup completion (trial users adding payment method)
+ */
+async function handlePaymentMethodSetup(
+  session: Stripe.Checkout.Session,
+  eventId: string,
+  supabase: any
+): Promise<void> {
+  const subscriberId = session.metadata?.subscriber_id
+
+  if (!subscriberId) {
+    console.error('Missing subscriber_id in payment setup session:', session.metadata)
+    return
+  }
+
+  // Check idempotency
+  const existingEventResult: any = await (supabase as any)
+    .from('upgrade_events')
+    .select('id')
+    .eq('stripe_event_id', eventId)
+    .single()
+
+  if (existingEventResult.data) {
+    console.log('Payment method setup already processed:', eventId)
+    return
+  }
+
+  console.log(`💳 Processing payment method setup for subscriber ${subscriberId}`)
+
+  // Get the setup intent to retrieve the payment method
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2026-02-25.clover',
+  })
+
+  const setupIntent = await stripe.setupIntents.retrieve(
+    session.setup_intent as string
+  )
+
+  // Update subscriber with payment method
+  await (supabase as any)
+    .from('subscribers')
+    .update({
+      payment_method_added: true,
+      stripe_payment_method_id: setupIntent.payment_method as string,
+      payment_method_added_at: new Date().toISOString(),
+    })
+    .eq('id', subscriberId)
+
+  // If subscription exists, attach the payment method as default
+  const subscriberResult: any = await (supabase as any)
+    .from('subscribers')
+    .select('stripe_subscription_id')
+    .eq('id', subscriberId)
+    .single()
+
+  if (subscriberResult.data?.stripe_subscription_id) {
+    await stripe.subscriptions.update(
+      subscriberResult.data.stripe_subscription_id,
+      {
+        default_payment_method: setupIntent.payment_method as string,
+      }
+    )
+    console.log(`   Payment method attached to subscription`)
+  }
+
+  // Record idempotency
+  await (supabase as any).from('upgrade_events').insert({
+    subscriber_id: subscriberId,
+    stripe_event_id: eventId,
+    event_type: 'payment_method_setup',
+  })
+
+  // Log the event
+  await (supabase as any)
+    .from('commands_log')
+    .insert({
+      subscriber_id: subscriberId,
+      channel: 'system',
+      raw_message: 'Payment method added successfully',
+      skill_triggered: 'payment_method_added',
+      success: true,
+      metadata: {
+        payment_method_id: setupIntent.payment_method,
+        session_id: session.id,
+      },
+    })
+
+  console.log(`✅ Payment method setup completed for subscriber ${subscriberId}`)
 }
 
 /**

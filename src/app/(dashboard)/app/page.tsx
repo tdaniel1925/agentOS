@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import UsageDashboard from '@/components/UsageDashboard'
 import TrialBanner from '@/components/dashboard/TrialBanner'
+import PaymentMethodAlert from '@/components/dashboard/PaymentMethodAlert'
+import PhoneProvisioningAlert from '@/components/dashboard/PhoneProvisioningAlert'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -81,6 +83,22 @@ export default async function DashboardPage() {
           trialEndsAt={subscriber.trial_ends_at}
           businessName={subscriber.business_name}
           botName={subscriber.bot_name}
+        />
+      )}
+
+      {/* Payment Method Alert - Show if trial user hasn't added payment method */}
+      {subscriber.billing_status === 'trialing' && !subscriber.payment_method_added && (
+        <PaymentMethodAlert
+          checkoutSessionUrl={subscriber.stripe_checkout_session_url}
+          subscriberId={subscriber.id}
+        />
+      )}
+
+      {/* Phone Provisioning Alert - Show if phone number not provisioned */}
+      {!subscriber.phone_number && subscriber.vapi_assistant_id && (
+        <PhoneProvisioningAlert
+          subscriberId={subscriber.id}
+          businessName={subscriber.business_name}
         />
       )}
 
@@ -344,7 +362,7 @@ export default async function DashboardPage() {
             {subscriber.bot_name}&apos;s Info
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <InfoRow label="Business Number" value={subscriber.vapi_phone_number || 'Setting up...'} />
+            <InfoRow label="Business Number" value={subscriber.phone_number || 'Setting up...'} />
             <InfoRow label="Control SMS" value={process.env.TWILIO_PHONE_NUMBER || '+1 (651) 728-7626'} />
             <InfoRow label="Industry Pack" value={subscriber.business_type || 'General'} />
             <InfoRow label="Current Plan" value={`$${subscriber.current_mrr}/month`} />

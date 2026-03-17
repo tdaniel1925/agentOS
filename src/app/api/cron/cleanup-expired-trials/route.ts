@@ -4,7 +4,7 @@
  * Runs daily to clean up trials that expired without converting to paid
  *
  * Actions:
- * - Release VAPI phone numbers (saves ~$1/month per number)
+ * - Release Twilio phone numbers (saves ~$1/month per number)
  * - Delete VAPI assistants (cleanup)
  * - Mark subscribers as trial_expired
  * - Update trial_conversions table
@@ -24,6 +24,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { releasePhoneNumber } from '@/lib/twilio/provisioning'
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY
 const VAPI_BASE_URL = 'https://api.vapi.ai'
@@ -32,8 +33,8 @@ interface ExpiredTrial {
   id: string
   email: string
   business_name: string
-  vapi_phone_number_id: string | null
-  vapi_phone_number: string | null
+  phone_number_sid: string | null
+  phone_number: string | null
   vapi_assistant_id: string
   trial_ends_at: string
 }
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     // Find all expired trials that haven't converted
     const result: any = await (supabase as any)
       .from('subscribers')
-      .select('id, email, business_name, vapi_phone_number_id, vapi_phone_number, vapi_assistant_id, trial_ends_at')
+      .select('id, email, business_name, phone_number_sid, phone_number, vapi_assistant_id, trial_ends_at')
       .eq('billing_status', 'trialing')
       .lt('trial_ends_at', now)
       .not('vapi_assistant_id', 'is', null)
@@ -80,15 +81,15 @@ export async function POST(req: NextRequest) {
       console.log(`\n   Processing expired trial for: ${trial.business_name} (${trial.email})`)
 
       try {
-        // 1. Release VAPI phone number
-        if (trial.vapi_phone_number_id) {
+        // 1. Release Twilio phone number
+        if (trial.phone_number_sid) {
           try {
-            await releaseVapiPhoneNumber(trial.vapi_phone_number_id)
-            console.log(`      ✅ Released phone number: ${trial.vapi_phone_number}`)
+            await releasePhoneNumber(trial.phone_number_sid)
+            console.log(`      ✅ Released phone number: ${trial.phone_number}`)
             cleanupResults.phone_numbers_released++
           } catch (phoneError) {
             console.error(`      ⚠️ Failed to release phone number:`, phoneError)
-            cleanupResults.errors.push(`Phone ${trial.vapi_phone_number}: ${phoneError}`)
+            cleanupResults.errors.push(`Phone ${trial.phone_number}: ${phoneError}`)
           }
         }
 
@@ -110,8 +111,8 @@ export async function POST(req: NextRequest) {
           .update({
             status: 'trial_expired',
             billing_status: 'cancelled',
-            vapi_phone_number: null,
-            vapi_phone_number_id: null,
+            phone_number: null,
+            phone_number_sid: null,
           })
           .eq('id', trial.id)
 
@@ -138,7 +139,8 @@ export async function POST(req: NextRequest) {
             skill_triggered: 'trial_cleanup',
             success: true,
             metadata: {
-              phone_number: trial.vapi_phone_number,
+              phone_number: trial.phone_number,
+              phone_number_sid: trial.phone_number_sid,
               assistant_id: trial.vapi_assistant_id,
               trial_ends_at: trial.trial_ends_at,
             },
@@ -170,27 +172,6 @@ export async function POST(req: NextRequest) {
       },
       { status: 500 }
     )
-  }
-}
-
-/**
- * Release VAPI phone number
- */
-async function releaseVapiPhoneNumber(phoneNumberId: string): Promise<void> {
-  if (!VAPI_API_KEY) {
-    throw new Error('VAPI_API_KEY not configured')
-  }
-
-  const response = await fetch(`${VAPI_BASE_URL}/phone-number/${phoneNumberId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${VAPI_API_KEY}`,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`VAPI phone delete failed: ${error}`)
   }
 }
 

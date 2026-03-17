@@ -21,7 +21,10 @@ export function getTwilioClient() {
 }
 
 /**
- * Send SMS via Twilio
+ * Send SMS via Twilio with A2P compliance
+ *
+ * If TWILIO_MESSAGING_SERVICE_SID is set, uses the messaging service (A2P compliant)
+ * Otherwise falls back to direct phone number sending
  */
 export async function sendSMS(params: {
   to: string
@@ -29,18 +32,30 @@ export async function sendSMS(params: {
   from?: string
 }): Promise<{ sid: string; status: string }> {
   const client = getTwilioClient()
-  const from = params.from || TWILIO_PHONE_NUMBER
-
-  if (!from) {
-    throw new Error('TWILIO_PHONE_NUMBER not configured')
-  }
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
 
   try {
-    const message = await client.messages.create({
+    const messageOptions: any = {
       to: params.to,
-      from: from,
       body: params.body,
-    })
+    }
+
+    // Use messaging service if configured (A2P compliant)
+    if (messagingServiceSid) {
+      messageOptions.messagingServiceSid = messagingServiceSid
+      console.log(`📱 Sending SMS via A2P messaging service ${messagingServiceSid}`)
+    }
+    // Otherwise use direct phone number
+    else {
+      const from = params.from || TWILIO_PHONE_NUMBER
+      if (!from) {
+        throw new Error('TWILIO_PHONE_NUMBER not configured')
+      }
+      messageOptions.from = from
+      console.log(`📱 Sending SMS from ${from} (A2P not configured)`)
+    }
+
+    const message = await client.messages.create(messageOptions)
 
     return {
       sid: message.sid,

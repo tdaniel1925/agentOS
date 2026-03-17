@@ -9,14 +9,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSubscriberFromOAuth, createSubscriberFromEmail } from '@/lib/auth/oauth-providers'
 import { sendEmail } from '@/lib/resend/client'
-import { buyVapiPhoneNumber } from '@/lib/vapi/client'
+import { provisionSubscriberPhoneNumber } from '@/lib/twilio/provisioning'
 import { sendSMS, formatPhoneNumber } from '@/lib/twilio/client'
 import { createServiceClient } from '@/lib/supabase/server'
+import { alertPhoneProvisioningFailure, alertStripeSubscriptionFailure } from '@/lib/alerts/admin-notifications'
 import Stripe from 'stripe'
 import type { BusinessDetails } from '@/types/signup-v2'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2026-02-25.clover',
 })
 
 interface ClaimAgentRequest {
@@ -151,39 +152,52 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       )
     }
 
-    // PROVISION PHONE NUMBER
-    let vapiPhoneNumber: string | null = null
-    let vapiPhoneNumberId: string | null = null
+    // PROVISION DEDICATED TWILIO NUMBER (Voice + SMS)
+    let twilioPhoneNumber: string | null = null
+    let twilioPhoneNumberSid: string | null = null
 
     try {
-      console.log(`📞 Provisioning phone number for subscriber ${subscriberId}`)
+      console.log(`📞 Provisioning Twilio number for subscriber ${subscriberId}`)
 
       // Extract area code from business phone
       const businessPhone = business_data.business_phone || ''
       const areaCode = businessPhone.replace(/\D/g, '').substring(0, 3)
 
-      const vapiPhone = await buyVapiPhoneNumber({
+      // Provision Twilio number (voice + SMS) and auto-associate with A2P campaign
+      const provisionedNumber = await provisionSubscriberPhoneNumber({
         areaCode: areaCode || undefined,
-        name: `${business_data.business_name} - Jordyn`,
-        assistantId: assistant_id,
+        businessName: business_data.business_name,
+        subscriberId: subscriberId,
+        vapiAssistantId: assistant_id, // For forwarding voice calls to VAPI
       })
 
-      vapiPhoneNumber = vapiPhone.number
-      vapiPhoneNumberId = vapiPhone.id
+      twilioPhoneNumber = provisionedNumber.phoneNumber
+      twilioPhoneNumberSid = provisionedNumber.phoneNumberSid
 
       // Update subscriber with phone number
       const supabase = createServiceClient()
       await (supabase as any)
         .from('subscribers')
         .update({
-          vapi_phone_number_id: vapiPhone.id,
-          vapi_phone_number: vapiPhone.number,
+          phone_number: provisionedNumber.phoneNumber,
+          phone_number_sid: provisionedNumber.phoneNumberSid,
+          vapi_assistant_id: assistant_id, // Keep VAPI assistant for AI voice
         })
         .eq('id', subscriberId)
 
-      console.log(`✅ Phone provisioned: ${vapiPhone.number}`)
+      console.log(`✅ Phone provisioned: ${provisionedNumber.phoneNumber}`)
+      console.log(`✅ Auto-associated with A2P campaign for SMS compliance`)
     } catch (phoneError) {
       console.error('⚠️ Phone provisioning failed:', phoneError)
+
+      // Send admin alert
+      await alertPhoneProvisioningFailure(
+        subscriberId,
+        business_data.business_name,
+        phoneError instanceof Error ? phoneError.message : String(phoneError),
+        1
+      )
+
       // Don't fail the whole signup - we can provision later
     }
 
@@ -214,7 +228,22 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       // Get the base product price ID from env
       const priceId = process.env.STRIPE_PRICE_ID_BASE || 'price_1QpcX4HdUWxMuNL5YpQkKLEq' // $97/month
 
+      // Create Checkout Session for payment method collection
+      // User can add payment method anytime during trial
+      const checkoutSession = await stripe.checkout.sessions.create({
+        customer: stripeCustomer.id,
+        mode: 'setup',
+        payment_method_types: ['card'],
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?payment_setup=success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?payment_setup=cancelled`,
+        metadata: {
+          subscriber_id: subscriberId,
+          business_name: business_data.business_name,
+        },
+      })
+
       // Create subscription with 7-day trial
+      // It will automatically charge the saved payment method on day 8
       const subscription = await stripe.subscriptions.create({
         customer: stripeCustomer.id,
         items: [{ price: priceId }],
@@ -236,23 +265,35 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
         .update({
           stripe_customer_id: stripeCustomer.id,
           stripe_subscription_id: subscription.id,
+          stripe_checkout_session_id: checkoutSession.id,
+          payment_method_added: false,
         })
         .eq('id', subscriberId)
 
       console.log(`✅ Stripe subscription created: ${subscription.id}`)
+      console.log(`✅ Checkout session created: ${checkoutSession.id}`)
     } catch (stripeError) {
       console.error('⚠️ Stripe subscription creation failed:', stripeError)
+
+      // Send admin alert
+      await alertStripeSubscriptionFailure(
+        subscriberId,
+        business_data.business_name,
+        stripeError instanceof Error ? stripeError.message : String(stripeError)
+      )
+
       // Don't fail signup - user can still use trial and we can add payment method later
     }
 
     // SEND WELCOME SMS
-    if (vapiPhoneNumber && business_data.business_phone) {
+    if (twilioPhoneNumber && business_data.business_phone) {
       try {
         await sendSMS({
           to: formatPhoneNumber(business_data.business_phone),
+          from: twilioPhoneNumber, // Send from subscriber's own number
           body: `Welcome to Jordyn! 🎉
 
-Your AI receptionist is ready at ${vapiPhoneNumber}
+Your AI receptionist is ready at ${twilioPhoneNumber}
 
 Forward your existing number to Jordyn or share this new number with clients. Text me anytime to give instructions!
 
@@ -269,7 +310,7 @@ Try: "What can you do?"
 
     // Send welcome email
     try {
-      await sendWelcomeEmail(userEmail, userName, business_data.name, trialEndsAt, vapiPhoneNumber)
+      await sendWelcomeEmail(userEmail, userName, business_data.name, trialEndsAt, twilioPhoneNumber)
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError)
       // Don't fail the whole request if email fails
