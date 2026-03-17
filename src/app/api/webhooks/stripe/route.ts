@@ -62,6 +62,12 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
       // New subscriber paid successfully
       const session = event.data.object as Stripe.Checkout.Session
 
+      // Handle setup fee payment (one-time payment for phone number)
+      if (session.metadata?.type === 'setup_fee') {
+        await handleSetupFeePayment(session, event.id, supabase)
+        return
+      }
+
       if (session.mode !== 'subscription') {
         console.log('Skipping non-subscription checkout')
         return
@@ -322,5 +328,74 @@ async function processStripeEvent(event: Stripe.Event): Promise<void> {
 
     default:
       console.log(`Unhandled event type: ${event.type}`)
+  }
+}
+
+/**
+ * Handle setup fee payment and trigger phone number provisioning
+ */
+async function handleSetupFeePayment(
+  session: Stripe.Checkout.Session,
+  eventId: string,
+  supabase: any
+): Promise<void> {
+  const { subscriber_id, phone_number, area_code } = session.metadata || {}
+
+  if (!subscriber_id || !phone_number || !area_code) {
+    console.error('Missing metadata in setup fee payment:', session.metadata)
+    return
+  }
+
+  // Check idempotency
+  const { data: existingEvent } = await supabase
+    .from('upgrade_events')
+    .select('id')
+    .eq('stripe_event_id', eventId)
+    .single()
+
+  if (existingEvent) {
+    console.log('Setup fee payment already processed:', eventId)
+    return
+  }
+
+  // Mark setup fee as paid
+  await supabase
+    .from('subscribers')
+    .update({
+      setup_fee_paid: true,
+      setup_fee_amount: 15.00,
+      setup_fee_paid_at: new Date().toISOString()
+    })
+    .eq('id', subscriber_id)
+
+  // Record idempotency
+  await supabase.from('upgrade_events').insert({
+    subscriber_id: subscriber_id,
+    stripe_event_id: eventId,
+    event_type: 'setup_fee_paid',
+  })
+
+  // Trigger phone number provisioning
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/phone-numbers/provision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscriberId: subscriber_id,
+        phoneNumber: phone_number,
+        areaCode: area_code
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Phone provisioning failed:', error)
+      // TODO: Refund the setup fee or notify admin
+    } else {
+      console.log('Phone number provisioned successfully for subscriber:', subscriber_id)
+    }
+  } catch (error) {
+    console.error('Error triggering phone provisioning:', error)
+    // TODO: Refund the setup fee or notify admin
   }
 }

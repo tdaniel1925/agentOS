@@ -44,10 +44,7 @@ CREATE TABLE IF NOT EXISTS subscriber_phone_numbers (
 
   -- Timestamps
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-  -- Constraints
-  CONSTRAINT unique_active_subscriber UNIQUE (subscriber_id) WHERE status = 'active'
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes
@@ -55,6 +52,9 @@ CREATE INDEX idx_phone_numbers_subscriber ON subscriber_phone_numbers(subscriber
 CREATE INDEX idx_phone_numbers_status ON subscriber_phone_numbers(status);
 CREATE INDEX idx_phone_numbers_area_code ON subscriber_phone_numbers(area_code);
 CREATE INDEX idx_phone_numbers_quarantine ON subscriber_phone_numbers(quarantine_until) WHERE status = 'quarantined';
+
+-- Partial unique index to enforce one active number per subscriber
+CREATE UNIQUE INDEX idx_unique_active_subscriber ON subscriber_phone_numbers(subscriber_id) WHERE status = 'active';
 
 -- RLS Policies
 ALTER TABLE subscriber_phone_numbers ENABLE ROW LEVEL SECURITY;

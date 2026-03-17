@@ -63,7 +63,8 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
     setError(null)
 
     try {
-      const res = await fetch('/api/phone-numbers/provision', {
+      // Step 1: Create Stripe Checkout session for $15 setup fee
+      const checkoutRes = await fetch('/api/stripe/setup-fee-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,13 +74,13 @@ export function NumberChooser({ subscriberId, onComplete }: NumberChooserProps) 
         })
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed')
+      const checkoutData = await checkoutRes.json()
+      if (!checkoutRes.ok) throw new Error(checkoutData.error || 'Failed to create checkout')
 
-      onComplete()
+      // Step 2: Redirect to Stripe Checkout
+      window.location.href = checkoutData.url
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Provisioning failed')
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to start checkout')
       setIsProvisioning(false)
     }
   }
