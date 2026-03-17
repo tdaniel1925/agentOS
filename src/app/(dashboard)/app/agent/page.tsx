@@ -19,23 +19,24 @@ export default async function AgentConfigPage() {
   }
 
   // Get subscriber
-  const { data: subscriberData, error: subscriberError } = await supabase
+  const { data: subscriber, error: subscriberError } = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
     .maybeSingle()
 
-  if (!subscriberData || subscriberError) {
+  if (!subscriber || subscriberError) {
     redirect('/onboarding')
   }
 
-  const subscriber = subscriberData
+  // TypeScript type assertion - subscriber is guaranteed to exist after redirect check
+  const subscriberId = subscriber.id as string
 
   // Get agent configuration
   const { data: agent } = await supabase
     .from('agents')
     .select('*')
-    .eq('subscriber_id', subscriber.id)
+    .eq('subscriber_id', subscriberId)
     .maybeSingle()
 
   return (
@@ -61,7 +62,7 @@ export default async function AgentConfigPage() {
         )}
 
         {agent && (
-          <AgentConfigForm agent={agent} subscriberId={subscriber.id} />
+          <AgentConfigForm agent={agent} subscriberId={subscriberId} />
         )}
       </div>
     </div>
