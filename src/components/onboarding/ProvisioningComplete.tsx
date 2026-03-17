@@ -25,7 +25,12 @@ export function ProvisioningComplete({ phoneNumber, onContinue }: ProvisioningCo
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-        <div className="text-6xl mb-4">🎉</div>
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-green-600">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           You're All Set!
@@ -46,11 +51,35 @@ export function ProvisioningComplete({ phoneNumber, onContinue }: ProvisioningCo
         {/* What's Included */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
           <div className="font-semibold text-green-900 mb-2">Included This Month:</div>
-          <ul className="text-sm text-green-800 space-y-1">
-            <li>✅ 200 voice minutes</li>
-            <li>✅ 500 SMS messages</li>
-            <li>✅ Unlimited AI responses</li>
-            <li>✅ Call transcripts & summaries</li>
+          <ul className="text-sm text-green-800 space-y-2">
+            <li className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600 flex-shrink-0">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              200 voice minutes
+            </li>
+            <li className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600 flex-shrink-0">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              500 SMS messages
+            </li>
+            <li className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600 flex-shrink-0">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              Unlimited AI responses
+            </li>
+            <li className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-600 flex-shrink-0">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              Call transcripts & summaries
+            </li>
           </ul>
         </div>
 

@@ -16,7 +16,16 @@ export function ProvisioningProgress({ progress }: ProvisioningProgressProps) {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <div className="text-center mb-6">
-          <div className="text-6xl mb-4 animate-bounce">🤖</div>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#1B3A7D]/10 rounded-full mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-[#1B3A7D]">
+              <path d="M12 8V4H8"></path>
+              <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+              <path d="M2 14h2"></path>
+              <path d="M20 14h2"></path>
+              <path d="M15 13v2"></path>
+              <path d="M9 13v2"></path>
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Setting Up Jordan...
           </h1>
@@ -60,9 +69,12 @@ function StatusStep({ completed, label }: StatusStepProps) {
   return (
     <div className="flex items-center gap-2 text-sm">
       {completed ? (
-        <span className="text-green-600">✅</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-green-600 flex-shrink-0">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
       ) : (
-        <span className="text-gray-400">⭕</span>
+        <div className="w-5 h-5 rounded-full border-2 border-gray-400 flex-shrink-0"></div>
       )}
       <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
         {label}

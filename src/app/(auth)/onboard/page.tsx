@@ -171,11 +171,11 @@ export default function OnboardPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
               >
                 <option value="">Select your industry...</option>
-                <option value="insurance">🛡️ Insurance</option>
-                <option value="cpa">💼 CPA / Accounting</option>
-                <option value="law">⚖️ Law / Legal</option>
-                <option value="realestate">🏠 Real Estate</option>
-                <option value="other">✨ Other</option>
+                <option value="insurance">Insurance</option>
+                <option value="cpa">CPA / Accounting</option>
+                <option value="law">Law / Legal</option>
+                <option value="realestate">Real Estate</option>
+                <option value="other">Other</option>
               </select>
             </div>
 
@@ -308,9 +308,13 @@ export default function OnboardPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-white/60 mt-6">
-          🔒 Secure checkout powered by Stripe
-        </p>
+        <div className="flex items-center justify-center gap-2 text-sm text-white/60 mt-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Secure checkout powered by Stripe</span>
+        </div>
       </div>
     </div>
   )
