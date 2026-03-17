@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
     )
 
     // Update call record with transcript and analysis
-    const { error: updateError } = await supabase
+    const { error: updateError }: any = await (supabase as any)
       .from('calls')
       .update({
         status: 'completed',

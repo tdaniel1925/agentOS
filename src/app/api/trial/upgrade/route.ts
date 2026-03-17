@@ -58,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const stripe = getStripeServer()
 
     // Get subscriber details
-    const { data: subscriber, error: fetchError } = await supabase
+    const { data: subscriber, error: fetchError }: any = await (supabase as any)
       .from('subscribers')
       .select('*')
       .eq('id', subscriberId)
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     })
 
     // Log the upgrade attempt
-    await supabase.from('commands_log').insert({
+    await (supabase as any).from('commands_log').insert({
       subscriber_id: subscriberId,
       skill_triggered: 'trial-upgrade-initiated',
       raw_message: `Trial upgrade checkout session created: ${session.id}`,
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const supabase = createServiceClient()
 
     // Get subscriber details
-    const { data: subscriber, error: fetchError } = await supabase
+    const { data: subscriber, error: fetchError }: any = await (supabase as any)
       .from('subscribers')
       .select('id, billing_status, trial_started_at, trial_ends_at')
       .eq('id', subscriberId)
