@@ -160,7 +160,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
       console.log(`📞 Provisioning Twilio number for subscriber ${subscriberId}`)
 
       // Extract area code from business phone
-      const businessPhone = business_data.business_phone || ''
+      const businessPhone = business_data.phone || ''
       const areaCode = businessPhone.replace(/\D/g, '').substring(0, 3)
 
       // Provision Twilio number (voice + SMS) and auto-associate with A2P campaign
@@ -286,10 +286,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ClaimAgentRes
     }
 
     // SEND WELCOME SMS
-    if (twilioPhoneNumber && business_data.business_phone) {
+    if (twilioPhoneNumber && business_data.phone) {
       try {
         await sendSMS({
-          to: formatPhoneNumber(business_data.business_phone),
+          to: formatPhoneNumber(business_data.phone),
           from: twilioPhoneNumber, // Send from subscriber's own number
           body: `Welcome to Jordyn! 🎉
 
