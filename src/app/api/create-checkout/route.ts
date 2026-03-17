@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       },
       // Add setup fee by creating an invoice item that will be added to the first invoice
       // We do this by creating the invoice item before the session, attached to the customer
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/welcome?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup?success=true&subscriber_id=${subscriberId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup?cancelled=true`,
       metadata: {
         subscriber_id: subscriberId,

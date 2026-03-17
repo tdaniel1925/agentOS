@@ -186,7 +186,7 @@ export async function searchWithAreaCodeFallback(
       .availablePhoneNumbers('US')
       .local
       .list({
-        areaCode: primaryAreaCode,
+        areaCode: parseInt(primaryAreaCode),
         limit: 1
       })
 
@@ -208,7 +208,7 @@ export async function searchWithAreaCodeFallback(
         .availablePhoneNumbers('US')
         .local
         .list({
-          areaCode: areaCode,
+          areaCode: parseInt(areaCode),
           limit: 1
         })
 

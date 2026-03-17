@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -15,7 +15,7 @@ import ProcessingOverlay from '@/components/onboarding/ProcessingOverlay'
 
 export const dynamic = 'force-dynamic'
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -411,7 +411,16 @@ export default function SignupPage() {
         <p className="text-center text-sm text-white/60 mt-6">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
+        </div>
       </div>
-    </div>
+    </>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-[#1B3A7D] to-[#0F2347] flex items-center justify-center"><div className="text-white">Loading...</div></div>}>
+      <SignupForm />
+    </Suspense>
   )
 }

@@ -4,7 +4,7 @@
  * Structure: Hero + Benefits + Pricing + CTA + Footer
  */
 
-export default function HomePage(): JSX.Element {
+export default function HomePage() {
   return (
     <>
       {/* ============ NAV ============ */}
