@@ -19,22 +19,24 @@ export default async function AgentConfigPage() {
   }
 
   // Get subscriber
-  const { data: subscriber, error: subscriberError } = await supabase
+  const { data: subscriberData, error: subscriberError } = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
-    .single()
+    .maybeSingle()
 
-  if (!subscriber || subscriberError) {
+  if (!subscriberData || subscriberError) {
     redirect('/onboarding')
   }
+
+  const subscriber = subscriberData
 
   // Get agent configuration
   const { data: agent } = await supabase
     .from('agents')
     .select('*')
     .eq('subscriber_id', subscriber.id)
-    .single()
+    .maybeSingle()
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
