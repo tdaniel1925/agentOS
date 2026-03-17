@@ -30,14 +30,14 @@ export async function parseSMSCommand(
     const supabase = createServiceClient()
 
     // Get subscriber context (recent calls, leads for name resolution)
-    const { data: recentCalls } = await supabase
+    const { data: recentCalls }: any = await (supabase as any)
       .from('calls')
       .select('contact_name, caller_number')
       .eq('subscriber_id', subscriberId)
       .order('created_at', { ascending: false })
       .limit(20)
 
-    const { data: leads } = await supabase
+    const { data: leads }: any = await (supabase as any)
       .from('leads')
       .select('name, phone')
       .eq('subscriber_id', subscriberId)
@@ -48,7 +48,7 @@ export async function parseSMSCommand(
     let contextInfo = ''
     if (recentCalls && recentCalls.length > 0) {
       contextInfo += '\nRecent contacts:\n'
-      recentCalls.forEach(call => {
+      recentCalls.forEach((call: any) => {
         if (call.contact_name && call.caller_number) {
           contextInfo += `- ${call.contact_name}: ${call.caller_number}\n`
         }
@@ -57,7 +57,7 @@ export async function parseSMSCommand(
 
     if (leads && leads.length > 0) {
       contextInfo += '\nKnown leads:\n'
-      leads.forEach(lead => {
+      leads.forEach((lead: any) => {
         contextInfo += `- ${lead.name}: ${lead.phone}\n`
       })
     }
@@ -182,7 +182,7 @@ export async function resolveContactNumber(
     const supabase = createServiceClient()
 
     // Search in recent calls
-    const { data: calls } = await supabase
+    const { data: calls }: any = await (supabase as any)
       .from('calls')
       .select('contact_name, caller_number, callee_number')
       .eq('subscriber_id', subscriberId)
@@ -191,7 +191,7 @@ export async function resolveContactNumber(
       .limit(5)
 
     // Search in leads
-    const { data: leads } = await supabase
+    const { data: leads }: any = await (supabase as any)
       .from('leads')
       .select('name, phone')
       .eq('subscriber_id', subscriberId)
@@ -202,7 +202,7 @@ export async function resolveContactNumber(
 
     // Collect matches from calls
     if (calls) {
-      calls.forEach(call => {
+      calls.forEach((call: any) => {
         if (call.contact_name && (call.caller_number || call.callee_number)) {
           matches.push({
             name: call.contact_name,
@@ -214,7 +214,7 @@ export async function resolveContactNumber(
 
     // Collect matches from leads
     if (leads) {
-      leads.forEach(lead => {
+      leads.forEach((lead: any) => {
         if (lead.name && lead.phone) {
           matches.push({
             name: lead.name,
