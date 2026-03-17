@@ -19,13 +19,13 @@ export default async function AgentConfigPage() {
   }
 
   // Get subscriber
-  const { data: subscriber } = await supabase
+  const { data: subscriber, error: subscriberError } = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
     .single()
 
-  if (!subscriber) {
+  if (!subscriber || subscriberError) {
     redirect('/onboarding')
   }
 
