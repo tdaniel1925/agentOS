@@ -45,6 +45,7 @@ function LoginForm() {
 
     try {
       const supabase = createClient()
+      console.log('🔍 Supabase client created')
 
       // Sign in with email and password
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -52,7 +53,14 @@ function LoginForm() {
         password,
       })
 
-      if (authError) throw authError
+      console.log('🔐 Sign in response:', { data, error: authError })
+
+      if (authError) {
+        console.error('❌ Auth error:', authError)
+        throw authError
+      }
+
+      console.log('✅ Signed in successfully, checking subscriber...')
 
       // Check if user has completed onboarding
       const { data: subscriber } = await supabase
@@ -60,6 +68,8 @@ function LoginForm() {
         .select('status')
         .eq('auth_user_id', data.user.id)
         .single()
+
+      console.log('👤 Subscriber:', subscriber)
 
       // Redirect based on subscriber status
       if (!subscriber) {
@@ -70,6 +80,13 @@ function LoginForm() {
         router.push('/app')
       }
     } catch (err: any) {
+      console.error('💥 Login error:', err)
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        status: err.status,
+        full: err
+      })
       setError(err.message || 'Login failed')
     } finally {
       setLoading(false)
