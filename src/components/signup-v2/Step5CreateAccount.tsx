@@ -47,13 +47,19 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
 
+      // Small delay to ensure user is fully created in database
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
-        throw new Error("Account created but sign-in failed. Please sign in manually.")
+        // Account created successfully, but auto-login failed
+        // Redirect to login page with success message
+        window.location.href = `/login?email=${encodeURIComponent(email)}&message=Account created! Please sign in.`
+        return
       }
 
       // Step 3: Redirect to dashboard
