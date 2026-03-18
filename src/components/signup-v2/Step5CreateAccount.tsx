@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { BusinessDetails } from "@/types/signup-v2"
 import { Mail, Lock, Sparkles } from "lucide-react"
+import { createBrowserClient } from '@supabase/ssr'
 
 interface Step5Props {
   assistantId: string
@@ -21,6 +22,7 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
     setError(null)
 
     try {
+      // Step 1: Create the account
       const response = await fetch("/api/signup/claim-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,7 +40,23 @@ export default function Step5CreateAccount({ assistantId, businessDetails }: Ste
       }
 
       const data = await response.json()
-      // Redirect to app dashboard
+
+      // Step 2: Sign in the user automatically
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        throw new Error("Account created but sign-in failed. Please sign in manually.")
+      }
+
+      // Step 3: Redirect to dashboard
       window.location.href = "/app"
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.")
