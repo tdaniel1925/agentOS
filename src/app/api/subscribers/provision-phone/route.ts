@@ -105,12 +105,40 @@ export async function POST(req: NextRequest) {
       throw new Error('Phone provisioning failed')
     }
 
-    // Update subscriber
+    // Import phone number into VAPI and link to assistant
+    console.log(`📱 Importing phone into VAPI...`)
+    const vapiImportResponse = await fetch('https://api.vapi.ai/phone-number', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        provider: 'twilio',
+        number: provisionedNumber.phoneNumber,
+        twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+        assistantId: subscriber.vapi_assistant_id,
+        name: `${subscriber.name} - Jordyn Number`
+      })
+    })
+
+    if (!vapiImportResponse.ok) {
+      const errorText = await vapiImportResponse.text()
+      console.error('⚠️ VAPI import failed:', errorText)
+      throw new Error(`VAPI import failed: ${errorText}`)
+    }
+
+    const vapiPhoneNumber = await vapiImportResponse.json()
+    console.log(`✅ Phone imported into VAPI: ${vapiPhoneNumber.id}`)
+
+    // Update subscriber with phone number AND VAPI phone number ID
     await (supabase as any)
       .from('subscribers')
       .update({
         phone_number: provisionedNumber.phoneNumber,
         phone_number_sid: provisionedNumber.phoneNumberSid,
+        vapi_phone_number_id: vapiPhoneNumber.id,
         phone_provisioned_at: new Date().toISOString(),
       })
       .eq('id', subscriber_id)

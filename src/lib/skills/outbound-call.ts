@@ -60,10 +60,24 @@ export async function makeOutboundCall(
       },
     })
 
-    // 4. Fire the call
+    // 4. Get subscriber's VAPI phone number ID from database
+    const phoneNumberIdResult: any = await (supabase as any)
+      .from('subscribers')
+      .select('vapi_phone_number_id')
+      .eq('id', params.subscriber.id)
+      .single()
+
+    if (!phoneNumberIdResult.data?.vapi_phone_number_id) {
+      throw new Error('No VAPI phone number configured for this subscriber')
+    }
+
+    const vapiPhoneNumberId = phoneNumberIdResult.data.vapi_phone_number_id
+
+    // 5. Fire the call using the subscriber's phone number
     const call = await createOutboundCall({
       phoneNumber: params.contactNumber,
       assistantId: assistant.id,
+      phoneNumberId: vapiPhoneNumberId,
       metadata: {
         subscriber_id: params.subscriber.id,
         task: params.task,
@@ -72,7 +86,7 @@ export async function makeOutboundCall(
       },
     })
 
-    // 5. Log the call initiation
+    // 6. Log the call initiation
     await (supabase as any).from('call_summaries').insert({
       subscriber_id: params.subscriber.id,
       call_type: 'outbound',
@@ -83,7 +97,7 @@ export async function makeOutboundCall(
       created_at: new Date().toISOString(),
     })
 
-    // 6. Confirm to subscriber
+    // 7. Confirm to subscriber
     const confirmMessage = `Calling ${params.contactName || params.contactNumber} now. I'll text you a summary when done.`
 
     await sendSMS({
