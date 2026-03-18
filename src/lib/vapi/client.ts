@@ -255,6 +255,7 @@ export async function deleteVapiAssistant(assistantId: string): Promise<void> {
 export async function createOutboundCall(params: {
   phoneNumber: string
   assistantId: string
+  phoneNumberId?: string
   metadata?: Record<string, any>
 }): Promise<{ id: string; status: string }> {
   const response = await fetch(`${VAPI_BASE_URL}/call/phone`, {
@@ -264,8 +265,11 @@ export async function createOutboundCall(params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      phoneNumber: params.phoneNumber,
+      customer: {
+        number: params.phoneNumber,
+      },
       assistantId: params.assistantId,
+      phoneNumberId: params.phoneNumberId,
       metadata: params.metadata || {},
     }),
   })
