@@ -404,8 +404,10 @@ async function handleUnknownCommand(
   subscriber: any,
   supabase: ReturnType<typeof createServiceClient>
 ): Promise<ExecutionResult> {
+  console.log('[handleUnknownCommand] Starting...')
   const rawMessage = intent.entities.raw_message || ''
   const messageLower = rawMessage.toLowerCase()
+  console.log('[handleUnknownCommand] Message:', messageLower)
 
   // Detect if request maps to an available add-on
   const upgrade = detectUpgradeOpportunity(messageLower)

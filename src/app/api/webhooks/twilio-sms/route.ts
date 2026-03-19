@@ -126,11 +126,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
 
       // Execute skill (pass supabase client for webhook context)
+      console.log('Calling executeSkill...')
       const result = await executeSkill(intent, context, subscriber, supabase)
+      console.log('ExecuteSkill result:', result)
 
       // Send response
       if (result.message) {
+        console.log('Sending SMS response:', result.message)
         await sendSMS(fromPhone, result.message)
+        console.log('SMS sent successfully')
+      } else {
+        console.log('No message in result, not sending SMS')
       }
 
       return twilioResponse()
