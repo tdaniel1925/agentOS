@@ -3,7 +3,6 @@
  * Creates dynamic VAPI assistants for specific outbound call tasks
  */
 
-import Anthropic from '@anthropic-ai/sdk'
 import {
   createVapiAssistant,
   createOutboundCall,
@@ -11,9 +10,10 @@ import {
 } from '@/lib/vapi/client'
 import { sendSMS } from '@/lib/twilio/client'
 import { createServiceClient } from '@/lib/supabase/server'
+import OpenAI from 'openai'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 interface OutboundCallParams {
@@ -47,20 +47,27 @@ export async function makeOutboundCall(
     const assistant = await createVapiAssistant({
       name: `ob-${shortId}-${timestamp}`,
       model: {
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-20250514',
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        temperature: 0.8,
         systemPrompt: systemPrompt,
       },
       voice: {
-        provider: 'elevenlabs',
-        voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female voice
+        provider: 'vapi',
+        voiceId: 'Elliot',
       },
       firstMessage: generateFirstMessage(params),
       recordingEnabled: true,
       transcriber: {
         provider: 'deepgram',
-        model: 'nova-2',
+        model: 'flux-general-en',
+        language: 'en',
       },
+      silenceTimeoutSeconds: 10,
+      maxDurationSeconds: 300,
+      voicemailDetectionEnabled: true,
+      backgroundSound: 'off',
+      firstMessageMode: 'assistant-waits-for-user',
     })
 
     // 4. Get subscriber's VAPI phone number ID from database
@@ -171,7 +178,7 @@ function detectCallType(task: string): 'business' | 'personal' | 'campaign' {
 }
 
 /**
- * Generate custom system prompt using Claude Sonnet
+ * Generate custom system prompt using OpenAI
  */
 async function generateSystemPrompt(
   params: OutboundCallParams,
@@ -202,8 +209,8 @@ Create a system prompt that:
 
 Return ONLY the system prompt text, no other commentary.`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
     max_tokens: 1000,
     temperature: 0.3,
     messages: [
@@ -214,12 +221,7 @@ Return ONLY the system prompt text, no other commentary.`
     ],
   })
 
-  const content = response.content[0]
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude')
-  }
-
-  return content.text
+  return response.choices[0].message.content || ''
 }
 
 /**
@@ -300,15 +302,15 @@ export async function handleCallCompletion(params: {
 }
 
 /**
- * Generate call summary using Claude Haiku
+ * Generate call summary using OpenAI
  */
 async function generateCallSummary(
   transcript: string,
   task: string
 ): Promise<string> {
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 300,
       temperature: 0,
       messages: [
@@ -326,12 +328,7 @@ Summary:`,
       ],
     })
 
-    const content = response.content[0]
-    if (content.type !== 'text') {
-      return 'Call completed. Unable to generate summary.'
-    }
-
-    return content.text
+    return response.choices[0].message.content || 'Call completed. Unable to generate summary.'
   } catch (error) {
     console.error('Summary generation error:', error)
     return 'Call completed. Summary generation failed.'
