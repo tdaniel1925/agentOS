@@ -628,7 +628,7 @@ export default function HomePage() {
         <section id="testimonials" className="py-20 bg-white" style={{ maxHeight: '900px' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-600 text-white text-sm font-semibold mb-4 border-2 border-brand-700">Real Results</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-green-600 text-white text-sm font-semibold mb-4 border-2 border-green-700">Real Results</span>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
                 Small Businesses
                 <span className="gradient-text"> Love Jordyn.</span>
@@ -691,7 +691,7 @@ export default function HomePage() {
         <section id="pricing" className="py-20" style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%)', maxHeight: '900px' }}>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-600 text-white text-sm font-semibold mb-4 border-2 border-brand-700">Simple Pricing</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-green-600 text-white text-sm font-semibold mb-4 border-2 border-green-700">Simple Pricing</span>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
                 One Plan.
                 <span className="gradient-text"> Everything Included.</span>
@@ -704,7 +704,7 @@ export default function HomePage() {
                 <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style={{ background: 'white', transform: 'translate(30%, -30%)' }}></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full opacity-10" style={{ background: 'white', transform: 'translate(-30%, 30%)' }}></div>
 
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white bg-opacity-20 mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-600 border-2 border-green-700 mb-6">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   <span className="text-white text-xs font-semibold">Most Popular</span>
                 </div>
@@ -744,8 +744,8 @@ export default function HomePage() {
             <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full opacity-10" style={{ background: 'white' }}></div>
           </div>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white bg-opacity-20 mb-6">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 border-2 border-green-700 mb-6">
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
               <span className="text-white text-sm font-medium"><span className="font-semibold">Jordyn.</span> is ready to answer your calls right now</span>
             </div>
             <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-white mb-6" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
