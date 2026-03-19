@@ -412,6 +412,22 @@ export default function HomePage() {
                 <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Powered by Claude AI</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">Built on Anthropic's Claude — one of the most advanced AI models — ensuring intelligent, context-aware conversations every time.</p>
               </div>
+
+              <div className="card-gradient rounded-large p-6 border border-brand-200 shadow-custom hover:shadow-custom-hover transition-all hover:-translate-y-1">
+                <div className="feature-icon-bg w-12 h-12 rounded-large flex items-center justify-center mb-4">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg>
+                </div>
+                <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Real-Time SMS Updates</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">Get instant text summaries after every call — who called, what they wanted, and what <span className="font-semibold">Jordyn.</span> told them. Stay in the loop from anywhere.</p>
+              </div>
+
+              <div className="card-gradient rounded-large p-6 border border-brand-200 shadow-custom hover:shadow-custom-hover transition-all hover:-translate-y-1">
+                <div className="feature-icon-bg w-12 h-12 rounded-large flex items-center justify-center mb-4">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><path d="M20 8v6M23 11h-6"></path></svg>
+                </div>
+                <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Smart Lead Capture</h3>
+                <p className="text-gray-600 text-sm leading-relaxed"><span className="font-semibold">Jordyn.</span> automatically collects caller names, numbers, and inquiry details. Every lead is logged and ready for your follow-up — no manual data entry needed.</p>
+              </div>
             </div>
           </div>
         </section>
