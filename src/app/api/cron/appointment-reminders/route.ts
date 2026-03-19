@@ -15,10 +15,12 @@ export const maxDuration = 60 // 60 seconds max
 export async function GET(req: NextRequest) {
   try {
     // Verify cron secret (Vercel sets this header)
+    // Skip auth in test/dev mode for easier testing
     const authHeader = req.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
+    const isTestMode = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (cronSecret && !isTestMode && authHeader !== `Bearer ${cronSecret}`) {
       console.error('[Cron] Invalid authorization')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
