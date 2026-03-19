@@ -30,12 +30,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
 
     // Create Supabase client - use plain client for webhooks (no cookies)
+    console.log('Creating Supabase client...')
+    console.log('URL:', SUPABASE_URL)
+    console.log('Key exists:', !!SUPABASE_SERVICE_ROLE_KEY)
+    console.log('Key length:', SUPABASE_SERVICE_ROLE_KEY?.length)
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     })
+
+    console.log('Supabase client created')
 
     // Parse form data from Twilio
     const formData = await request.formData()
@@ -57,6 +64,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // CHECK 1: Is sender an Apex rep?
     // =============================================
 
+    console.log('Checking if sender is rep:', fromPhone)
     const repLookup: any = await (supabase as any)
       .from('agentos_reps')
       .select('*')
@@ -64,18 +72,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .eq('active', true)
       .single()
 
+    console.log('Rep lookup result:', repLookup.error ? `Error: ${repLookup.error.message}` : `Found: ${!!repLookup.data}`)
     const isRep = !!repLookup.data
 
     // =============================================
     // CHECK 2: Is sender a subscriber?
     // =============================================
 
+    console.log('Checking if sender is subscriber:', fromPhone)
     const subscriberLookup: any = await (supabase as any)
       .from('subscribers')
       .select('*')
       .eq('control_phone', fromPhone)
       .single()
 
+    console.log('Subscriber lookup result:', subscriberLookup.error ? `Error: ${subscriberLookup.error.message}` : `Found: ${!!subscriberLookup.data}`)
     const isSubscriber = !!subscriberLookup.data
 
     // =============================================
