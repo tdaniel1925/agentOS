@@ -340,7 +340,7 @@ export default function HomePage() {
         <section id="features" className="py-20 bg-brand-50" style={{ maxHeight: '1100px' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-600 text-white text-sm font-semibold mb-4 border-2 border-brand-700">Everything You Need</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-green-600 text-white text-sm font-semibold mb-4 border-2 border-green-700">Everything You Need</span>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
                 Your Receptionist,
                 <span className="gradient-text"> Supercharged</span>
@@ -420,7 +420,7 @@ export default function HomePage() {
         <section id="how-it-works" className="py-20 bg-white" style={{ maxHeight: '900px' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-600 text-white text-sm font-semibold mb-4 border-2 border-brand-700">Simple Setup</span>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-green-600 text-white text-sm font-semibold mb-4 border-2 border-green-700">Simple Setup</span>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
                 Up &amp; Running in
                 <span className="gradient-text"> 2 Minutes</span>
