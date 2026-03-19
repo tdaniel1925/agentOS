@@ -40,6 +40,7 @@ Intent Categories:
 - UNKNOWN: Anything that doesn't match above
 
 Entity Extraction:
+For MAKE_OUTBOUND_CALL extract: contact_name, contact_number (phone in E.164 format like +12815058290), task (what to say), tone (professional/casual/urgent)
 For CREATE_CAMPAIGN extract: prospect_name, prospect_email, prospect_phone, industry, goal, duration, interval
 For GENERATE_LEADS extract: target_type, location, size, qualifier
 For CREATE_POST extract: topic, platform, count
@@ -101,6 +102,7 @@ Return JSON only:`
       raw_message: message,
       parsed_intent: intent.intent,
       confidence: intent.confidence,
+      entities: intent.entities,
       active_features: context.features?.map((f: any) => f.feature_name) || []
     })
 
