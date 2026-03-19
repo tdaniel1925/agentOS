@@ -319,18 +319,26 @@ async function createVAPIAssistant(
   try {
     console.log(`Creating VAPI assistant for subscriber ${subscriberId}`)
 
-    // Inbound prompt (when subscriber calls Jordan)
-    const inboundPrompt = `You are Jordan, ${subscriberData.name || 'the business owner'}'s AI assistant.
+    // Get business name or fallback to personal name
+    const businessName = subscriberData.business_name || subscriberData.name || 'the office'
+    const botName = subscriberData.bot_name || 'Jordan'
 
-The business owner is calling you. They might ask you to:
-- Check their email inbox
-- Check missed calls
-- Make outbound calls to leads
-- Schedule appointments
-- Give status reports
-- Send SMS messages
+    // Inbound prompt (when someone calls the business - receptionist mode)
+    const inboundPrompt = `You are ${botName}, the AI receptionist for ${businessName}.
 
-Be helpful, concise, and proactive. You work FOR them. Keep responses under 30 seconds unless they ask for details.`
+Your role is to answer incoming calls professionally and helpfully. You are ANSWERING the phone for the business.
+
+You can help callers with:
+- Answering questions about the business
+- Taking messages
+- Booking appointments
+- Providing information
+- Directing calls appropriately
+- Capturing lead information
+
+Be professional, friendly, and helpful. You represent ${businessName} to every caller.
+
+Important: You are ANSWERING calls (receptionist), not making them. Speak as if you picked up the phone when someone called the business.`
 
     // Create the assistant
     const response = await fetch('https://api.vapi.ai/assistant', {
@@ -340,7 +348,7 @@ Be helpful, concise, and proactive. You work FOR them. Keep responses under 30 s
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: `Jordan - ${subscriberId.substring(0, 8)}`,
+        name: `${botName} - ${subscriberId.substring(0, 8)}`,
         model: {
           provider: 'openai',
           model: 'gpt-4o-mini',
@@ -351,8 +359,8 @@ Be helpful, concise, and proactive. You work FOR them. Keep responses under 30 s
           provider: 'vapi',
           voiceId: 'Elliot'
         },
-        firstMessage: `Hi! This is Jordan. How can I help you today?`,
-        endCallMessage: `Thanks for calling. I'll get that done for you right away.`,
+        firstMessage: `Thank you for calling ${businessName}, this is ${botName}. How can I help you today?`,
+        endCallMessage: `Thank you for calling ${businessName}. Have a great day!`,
         endCallPhrases: ['goodbye', 'bye', 'talk to you later', 'that\'s all'],
         recordingEnabled: true,
         hipaaEnabled: false,

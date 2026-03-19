@@ -41,10 +41,13 @@ Intent Categories:
 
 Entity Extraction:
 For MAKE_OUTBOUND_CALL extract: contact_name, contact_number (phone in E.164 format like +12815058290), task (what to say), tone (professional/casual/urgent)
+For BOOK_APPOINTMENT extract: contact_name, contact_phone, contact_email, date (ISO format or relative like "tomorrow"), time (24h format like "14:00"), duration_minutes, title, description, location
+For CHECK_CALENDAR extract: timeframe (today/tomorrow/week/month), date (ISO format if specific)
+For CHECK_SCHEDULE: Same as CHECK_CALENDAR
+For CANCEL_APPOINTMENT extract: identifier (contact name, time, or "next appointment" or "all")
 For CREATE_CAMPAIGN extract: prospect_name, prospect_email, prospect_phone, industry, goal, duration, interval
 For GENERATE_LEADS extract: target_type, location, size, qualifier
 For CREATE_POST extract: topic, platform, count
-For CHECK_CALENDAR extract: timeframe (today or week)
 For REPLY_TO_EMAIL extract: reference_number (the email #), body_text (the reply message)
 For COMPOSE_EMAIL extract: to_address (email), subject, body_text (the message)
 For CONFIRM_SEND: No entities needed (just "SEND" or "send email")

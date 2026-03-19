@@ -17,7 +17,8 @@ interface VapiAssistantConfig {
     provider: string
     voiceId: string
   }
-  firstMessage: string
+  firstMessage?: string | null
+  firstMessageMode?: 'assistant-speaks-first' | 'assistant-waits-for-user'
   recordingEnabled: boolean
   transcriber: {
     provider: string

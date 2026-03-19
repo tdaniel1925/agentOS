@@ -15,6 +15,7 @@ import { checkCalls } from './call-check'
 import { checkCalendar } from './calendar-check'
 import { replyToEmail, composeEmail } from './email-reply'
 import { sendLatestDraft } from './email-send'
+import { bookAppointment, checkCalendar as checkCalendarNew, cancelAppointment } from './calendar-skill'
 
 export interface ExecutionResult {
   success: boolean
@@ -93,10 +94,7 @@ export async function executeSkill(
 
       // CALENDAR RELATED
       case 'CHECK_CALENDAR':
-        return await checkCalendar({
-          subscriber,
-          timeframe: intent.entities?.timeframe || 'today'
-        })
+        return await checkCalendarNew(intent, subscriber, db)
 
       // APPOINTMENT RELATED
       case 'CHECK_SCHEDULE':
@@ -855,7 +853,19 @@ async function handleLeadCommand(intent: SMSIntent, context: any, subscriber: an
 }
 
 async function handleAppointmentCommand(intent: SMSIntent, context: any, subscriber: any, supabase: any): Promise<ExecutionResult> {
-  return { success: true, message: "Appointment features coming soon!" }
+  switch (intent.intent) {
+    case 'BOOK_APPOINTMENT':
+      return await bookAppointment(intent, subscriber, supabase)
+
+    case 'CHECK_SCHEDULE':
+      return await checkCalendarNew(intent, subscriber, supabase)
+
+    case 'CANCEL_APPOINTMENT':
+      return await cancelAppointment(intent, subscriber, supabase)
+
+    default:
+      return { success: true, message: "Appointment features available: book, check, cancel" }
+  }
 }
 
 async function handleSkillManagement(intent: SMSIntent, subscriber: any, supabase: any): Promise<ExecutionResult> {
