@@ -2,11 +2,13 @@
  * Calendar Skill
  * Handles calendar operations: booking, checking, canceling appointments
  * Uses hybrid approach: CalDAV read + .ics email write
+ * All dates are timezone-aware using subscriber's timezone
  */
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendCalendarInvite, sendCancellationEmail } from '@/lib/calendar/email-sender'
 import { getEventsForDate, getEventsForRange, formatEventsForSMS, isTimeSlotAvailable } from '@/lib/calendar/caldav-reader'
+import { parseDate, formatDate, formatTime, formatDateTime } from '@/lib/calendar/timezone'
 import { SMSIntent } from './sms-parser'
 
 export interface ExecutionResult {
@@ -15,55 +17,8 @@ export interface ExecutionResult {
   data?: any
 }
 
-/**
- * Parse date from natural language
- */
-function parseDate(dateStr: string, timeStr?: string): Date | null {
-  const now = new Date()
-  const lower = dateStr.toLowerCase()
-
-  let targetDate: Date
-
-  if (lower === 'today') {
-    targetDate = new Date(now)
-  } else if (lower === 'tomorrow') {
-    targetDate = new Date(now)
-    targetDate.setDate(targetDate.getDate() + 1)
-  } else if (lower.match(/^next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/)) {
-    const dayName = lower.split(' ')[1]
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-    const targetDay = days.indexOf(dayName)
-    const currentDay = now.getDay()
-    const daysUntil = (targetDay - currentDay + 7) % 7 || 7
-    targetDate = new Date(now)
-    targetDate.setDate(targetDate.getDate() + daysUntil)
-  } else {
-    // Try ISO format or Date.parse
-    targetDate = new Date(dateStr)
-    if (isNaN(targetDate.getTime())) {
-      return null
-    }
-  }
-
-  // Set time if provided
-  if (timeStr) {
-    const timeMatch = timeStr.match(/^(\d{1,2}):?(\d{2})?\s*(am|pm)?$/i)
-    if (timeMatch) {
-      let hours = parseInt(timeMatch[1])
-      const minutes = parseInt(timeMatch[2] || '0')
-      const meridiem = timeMatch[3]?.toLowerCase()
-
-      if (meridiem === 'pm' && hours < 12) hours += 12
-      if (meridiem === 'am' && hours === 12) hours = 0
-
-      targetDate.setHours(hours, minutes, 0, 0)
-    }
-  } else {
-    targetDate.setHours(0, 0, 0, 0)
-  }
-
-  return targetDate
-}
+// parseDate function moved to @/lib/calendar/timezone
+// All date parsing now uses subscriber's timezone
 
 /**
  * Book an appointment
@@ -78,8 +33,11 @@ export async function bookAppointment(
   try {
     const entities = intent.entities || {}
 
-    // Parse date and time
-    const startTime = parseDate(entities.date || 'today', entities.time)
+    // Get subscriber timezone (default to Central if not set)
+    const timezone = subscriber.timezone || 'America/Chicago'
+
+    // Parse date and time in subscriber's timezone
+    const startTime = parseDate(entities.date || 'today', entities.time, timezone)
     if (!startTime) {
       return {
         success: false,
@@ -144,7 +102,8 @@ export async function bookAppointment(
         endTime: new Date(appt.end_time),
         businessName: subscriber.business_name || subscriber.name,
         businessEmail: subscriber.email,
-        reminderMinutes: 15
+        reminderMinutes: 15,
+        timezone: timezone
       })
 
       // Mark as sent
@@ -157,16 +116,9 @@ export async function bookAppointment(
         .eq('id', appt.id)
     }
 
-    // Format confirmation message
-    const dateStr = startTime.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    })
-    const timeStr = startTime.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    })
+    // Format confirmation message in subscriber's timezone
+    const dateStr = formatDate(new Date(appt.start_time), timezone)
+    const timeStr = formatTime(new Date(appt.start_time), timezone)
 
     return {
       success: true,
@@ -197,24 +149,26 @@ export async function checkCalendar(
     const entities = intent.entities || {}
     const timeframe = entities.timeframe || 'today'
 
+    // Get subscriber timezone (default to Central if not set)
+    const timezone = subscriber.timezone || 'America/Chicago'
+
     // Check if calendar URL is configured
     if (!subscriber.calendar_url) {
       // Fall back to Jordyn-managed appointments only
-      const now = new Date()
       let startDate: Date
       let endDate: Date
 
       if (timeframe === 'today' || timeframe === 'tomorrow') {
-        startDate = parseDate(timeframe) || now
+        startDate = parseDate(timeframe, undefined, timezone) || new Date()
         endDate = new Date(startDate)
         endDate.setHours(23, 59, 59, 999)
       } else if (timeframe === 'week') {
-        startDate = now
-        endDate = new Date(now)
+        startDate = parseDate('today', undefined, timezone) || new Date()
+        endDate = new Date(startDate)
         endDate.setDate(endDate.getDate() + 7)
       } else {
-        startDate = now
-        endDate = new Date(now)
+        startDate = parseDate('today', undefined, timezone) || new Date()
+        endDate = new Date(startDate)
         endDate.setDate(endDate.getDate() + 1)
       }
 
@@ -242,10 +196,7 @@ export async function checkCalendar(
       let message = `Your appointments ${timeframe}:\n\n`
       for (const appt of appointments) {
         const start = new Date(appt.start_time)
-        const timeStr = start.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit'
-        })
+        const timeStr = formatTime(start, timezone)
         message += `• ${timeStr} - ${appt.title}\n`
         if (appt.location) message += `  📍 ${appt.location}\n`
       }
@@ -274,7 +225,7 @@ export async function checkCalendar(
       events = await getEventsForDate(subscriber.calendar_url, now)
     }
 
-    const message = formatEventsForSMS(events)
+    const message = formatEventsForSMS(events, timezone)
 
     return {
       success: true,
@@ -303,6 +254,9 @@ export async function cancelAppointment(
   try {
     const entities = intent.entities || {}
     const identifier = entities.identifier
+
+    // Get subscriber timezone (default to Central if not set)
+    const timezone = subscriber.timezone || 'America/Chicago'
 
     if (!identifier) {
       return {
@@ -369,7 +323,8 @@ export async function cancelAppointment(
         endTime: new Date(toCancel.end_time),
         businessName: subscriber.business_name || subscriber.name,
         businessEmail: subscriber.email,
-        reason: 'Cancelled via SMS'
+        reason: 'Cancelled via SMS',
+        timezone: timezone
       })
     }
 

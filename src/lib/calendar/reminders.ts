@@ -1,10 +1,12 @@
 /**
  * Calendar Reminders System
  * Sends SMS reminders before appointments
+ * All times are displayed in subscriber's timezone
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { sendSMS } from '@/lib/twilio/client'
+import { formatDateTime } from '@/lib/calendar/timezone'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -58,7 +60,8 @@ export async function sendAppointmentReminders(): Promise<{
             id,
             name,
             business_name,
-            control_phone
+            control_phone,
+            timezone
           )
         `)
         .eq('status', 'scheduled')
@@ -91,21 +94,14 @@ export async function sendAppointmentReminders(): Promise<{
             continue
           }
 
-          // Format appointment details
+          // Format appointment details in subscriber's timezone
           const startTime = new Date(appointment.start_time)
-          const dateStr = startTime.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric'
-          })
-          const timeStr = startTime.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-          })
+          const timezone = subscriber.timezone || 'America/Chicago'
+          const dateTimeStr = formatDateTime(startTime, timezone)
 
           // Build reminder message
           let message = `⏰ Reminder: ${appointment.title}\n`
-          message += `${dateStr} at ${timeStr}\n`
+          message += `${dateTimeStr}\n`
 
           if (appointment.location) {
             message += `📍 ${appointment.location}\n`

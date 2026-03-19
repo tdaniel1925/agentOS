@@ -5,6 +5,7 @@
 
 import { Resend } from 'resend'
 import { generateAppointmentICS, generateCancellationICS } from './ics-generator'
+import { formatDateTime } from './timezone'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'jordyn@jordyn.app'
@@ -21,6 +22,7 @@ export interface SendCalendarInviteParams {
   businessName: string
   businessEmail: string
   reminderMinutes?: number
+  timezone?: string
 }
 
 /**
@@ -45,19 +47,9 @@ export async function sendCalendarInvite(params: SendCalendarInviteParams): Prom
       reminderMinutes: params.reminderMinutes
     })
 
-    // Format date/time for email body
-    const dateStr = params.startTime.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-
-    const timeStr = params.startTime.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    })
+    // Format date/time for email body in subscriber's timezone
+    const timezone = params.timezone || 'America/Chicago'
+    const dateTimeStr = formatDateTime(params.startTime, timezone)
 
     // Email HTML body
     const htmlBody = `
@@ -66,7 +58,7 @@ export async function sendCalendarInvite(params: SendCalendarInviteParams): Prom
 
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #333;">${params.title}</h3>
-          <p style="margin: 10px 0;"><strong>When:</strong> ${dateStr} at ${timeStr}</p>
+          <p style="margin: 10px 0;"><strong>When:</strong> ${dateTimeStr}</p>
           ${params.location ? `<p style="margin: 10px 0;"><strong>Where:</strong> ${params.location}</p>` : ''}
           ${params.description ? `<p style="margin: 10px 0;"><strong>Details:</strong> ${params.description}</p>` : ''}
         </div>
@@ -111,6 +103,7 @@ export async function sendCancellationEmail(params: {
   businessName: string
   businessEmail: string
   reason?: string
+  timezone?: string
 }): Promise<void> {
   try {
     console.log(`[Calendar Email] Sending cancellation to ${params.to}`)
@@ -125,16 +118,9 @@ export async function sendCancellationEmail(params: {
       businessEmail: params.businessEmail
     })
 
-    const dateStr = params.startTime.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric'
-    })
-
-    const timeStr = params.startTime.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    })
+    // Format date/time for email body in subscriber's timezone
+    const timezone = params.timezone || 'America/Chicago'
+    const dateTimeStr = formatDateTime(params.startTime, timezone)
 
     const htmlBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -142,7 +128,7 @@ export async function sendCancellationEmail(params: {
 
         <div style="background-color: #fff3f3; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #C7181F;">
           <h3 style="margin-top: 0; color: #333;">${params.title}</h3>
-          <p style="margin: 10px 0;"><strong>Was scheduled for:</strong> ${dateStr} at ${timeStr}</p>
+          <p style="margin: 10px 0;"><strong>Was scheduled for:</strong> ${dateTimeStr}</p>
           ${params.reason ? `<p style="margin: 10px 0;"><strong>Reason:</strong> ${params.reason}</p>` : ''}
         </div>
 

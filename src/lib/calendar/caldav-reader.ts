@@ -5,6 +5,7 @@
  */
 
 import ICAL from 'ical.js'
+import { formatDate, formatTime } from './timezone'
 
 export interface CalendarEvent {
   id: string
@@ -165,9 +166,9 @@ export async function getUpcomingEvents(
 }
 
 /**
- * Format events for display
+ * Format events for display in subscriber's timezone
  */
-export function formatEventsForSMS(events: CalendarEvent[]): string {
+export function formatEventsForSMS(events: CalendarEvent[], timezone: string = 'America/Chicago'): string {
   if (events.length === 0) {
     return 'No events found.'
   }
@@ -175,17 +176,10 @@ export function formatEventsForSMS(events: CalendarEvent[]): string {
   let message = `Found ${events.length} event${events.length === 1 ? '' : 's'}:\n\n`
 
   for (const event of events) {
-    const date = event.start.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    })
-    const time = event.allDay ? 'All day' : event.start.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    })
+    const dateStr = formatDate(event.start, timezone)
+    const timeStr = event.allDay ? 'All day' : formatTime(event.start, timezone)
 
-    message += `• ${date} at ${time}\n  ${event.title}\n`
+    message += `• ${dateStr} at ${timeStr}\n  ${event.title}\n`
     if (event.location) {
       message += `  📍 ${event.location}\n`
     }

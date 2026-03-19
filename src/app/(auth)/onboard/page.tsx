@@ -26,6 +26,7 @@ export default function OnboardPage() {
     const phone = formData.get('phone') as string
     const painPoint = formData.get('pain_point') as string
     const botName = formData.get('bot_name') as string || 'Jordan'
+    const timezone = formData.get('timezone') as string
 
     try {
       const supabase = createClient()
@@ -43,6 +44,7 @@ export default function OnboardPage() {
           business_type: businessType,
           phone,
           bot_name: botName,
+          timezone: timezone,
         })
         .eq('auth_user_id', user.id)
         .select()
@@ -112,7 +114,7 @@ export default function OnboardPage() {
                 Tell Us About Your Business
               </h1>
               <p className="text-gray-600">
-                Just 5 quick questions to customize your bot
+                Just 6 quick questions to customize your bot
               </p>
             </div>
           </div>
@@ -231,6 +233,46 @@ export default function OnboardPage() {
               <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
                 <span className="inline-flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">5</span>
+                  Your Timezone
+                </span>
+              </label>
+              <select
+                name="timezone"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B3A7D] focus:border-[#1B3A7D] outline-none transition-all text-gray-900 bg-white"
+              >
+                <option value="">Select your timezone...</option>
+                <optgroup label="US Timezones">
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                  <option value="America/Chicago">Central Time (CT)</option>
+                  <option value="America/Denver">Mountain Time (MT)</option>
+                  <option value="America/Phoenix">Arizona (MST - No DST)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="America/Anchorage">Alaska Time (AKT)</option>
+                  <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
+                </optgroup>
+                <optgroup label="International">
+                  <option value="Europe/London">London (GMT/BST)</option>
+                  <option value="Europe/Paris">Paris (CET/CEST)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
+                  <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                </optgroup>
+              </select>
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+                All appointment times will be shown in your timezone
+              </p>
+            </div>
+
+            {/* Question 6 */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <label className="block text-sm font-bold text-[#1B3A7D] mb-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 bg-[#1B3A7D] text-white rounded-full text-xs">6</span>
                   Bot Name (Optional)
                 </span>
               </label>
