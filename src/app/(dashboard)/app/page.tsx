@@ -11,6 +11,8 @@ import TrialBanner from '@/components/dashboard/TrialBanner'
 import PaymentMethodAlert from '@/components/dashboard/PaymentMethodAlert'
 import PhoneProvisioningAlert from '@/components/dashboard/PhoneProvisioningAlert'
 import CalendarSetupAlert from '@/components/dashboard/CalendarSetupAlert'
+import EmailForwardingCard from '@/components/dashboard/EmailForwardingCard'
+import { assignJordynEmailAddress } from '@/lib/email/address-generator'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -32,6 +34,15 @@ export default async function DashboardPage() {
 
   if (!subscriber) {
     redirect('/onboard')
+  }
+
+  // Assign Jordyn email address if not already assigned
+  if (!subscriber.jordyn_email_address) {
+    try {
+      subscriber.jordyn_email_address = await assignJordynEmailAddress(subscriber.id)
+    } catch (error) {
+      console.error('Failed to assign Jordyn email address:', error)
+    }
   }
 
   // Get today's stats
@@ -246,6 +257,16 @@ export default async function DashboardPage() {
             />
           </div>
         </div>
+
+        {/* Email Forwarding Card - Show if user has Jordyn email */}
+        {subscriber.jordyn_email_address && (
+          <div className="mb-8">
+            <EmailForwardingCard
+              jordynEmail={subscriber.jordyn_email_address}
+              businessName={subscriber.business_name}
+            />
+          </div>
+        )}
 
         {/* Usage Dashboard */}
         <div className="mb-8">
