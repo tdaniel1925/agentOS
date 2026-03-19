@@ -152,18 +152,18 @@ export default function HomePage() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
               {/* Left Content */}
               <div className="text-center lg:text-left z-10 pb-16 lg:pb-24">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-brand-200 shadow-custom mb-6">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-sm font-medium text-brand-700">Now answering calls for 500+ businesses</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border-2 border-green-500 shadow-custom mb-6">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-sm font-bold text-green-700">Privacy-First AI Assistant</span>
                 </div>
 
                 <h1 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight mb-6" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
-                  When answering calls
-                  <span className="gradient-text block">just isn't enough.</span>
+                  The safest AI for
+                  <span className="gradient-text block">calls, email & calendar.</span>
                 </h1>
 
                 <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-                  <span className="font-semibold text-brand-700">Jordyn.</span> doesn't just answer calls — she makes them too. Just send a text message and Jordyn handles the entire conversation for you. Forward your cell phone in seconds (we'll show you how), and let Jordyn manage both incoming and outgoing calls 24/7. All for just <strong className="text-brand-700">$97/month</strong>.
+                  <span className="font-semibold text-brand-700">Jordyn.</span> manages your calls, emails, and calendar with <strong className="text-green-600">privacy-first design</strong>. Ephemeral email processing (deleted in 60 seconds), read-only calendar access (no OAuth), and secure SMS commands. Your data stays private. All for just <strong className="text-brand-700">$97/month</strong>.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
@@ -369,6 +369,18 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="card-gradient rounded-large p-6 border border-green-200 shadow-custom hover:shadow-custom-hover transition-all hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-large flex items-center justify-center mb-4 bg-green-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m2 7 10 7 10-7"></path></svg>
+                </div>
+                <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Ephemeral Email Processing</h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-3">Forward emails to your unique Jordyn address. AI analyzes and texts you summaries. <strong className="text-green-600">Full content deleted in 60 seconds</strong>. Only metadata stored.</p>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-green-700 text-xs font-semibold">Industry-first: 60-second deletion</span>
+                </div>
+              </div>
+
               <div className="card-gradient rounded-large p-6 border border-brand-200 shadow-custom hover:shadow-custom-hover transition-all hover:-translate-y-1">
                 <div className="feature-icon-bg w-12 h-12 rounded-large flex items-center justify-center mb-4">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
@@ -450,6 +462,108 @@ export default function HomePage() {
                   <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2"><span className="font-semibold">Jordyn.</span> Takes Over</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">That's it! <span className="font-semibold">Jordyn.</span> starts answering calls immediately. You get real-time summaries of every call and booking via text.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PRIVACY-FIRST SECTION */}
+        <section className="py-20" style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)', maxHeight: '800px' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border-2 border-green-500 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span className="text-green-700 text-sm font-bold">Privacy-First by Design</span>
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
+                Why <span className="text-green-600">Jordyn</span> is Safer Than Other AI Assistants
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">Most AI assistants require full access to your accounts. <strong>Not Jordyn.</strong> We built privacy and security into every feature.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Email Privacy */}
+              <div className="bg-white rounded-xl p-6 border-2 border-green-200 shadow-lg">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m2 7 10 7 10-7"></path></svg>
+                </div>
+                <h3 className="font-heading font-bold text-lg text-gray-900 mb-3 text-center">Ephemeral Email</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700"><strong className="text-green-600">60-second deletion</strong> - Content never stored</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">Only metadata saved (sender, subject, category)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">You control what we see (forward only what you want)</span>
+                  </div>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-xs text-red-700"><strong>Other AI:</strong> Stores full email content, requires OAuth write access to your inbox</p>
+                </div>
+              </div>
+
+              {/* Calendar Privacy */}
+              <div className="bg-white rounded-xl p-6 border-2 border-green-200 shadow-lg">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <h3 className="font-heading font-bold text-lg text-gray-900 mb-3 text-center">Read-Only Calendar</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700"><strong className="text-green-600">No OAuth</strong> - Simple iCal feed</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">Read-only access (Jordyn can't modify events)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">Works with any provider (Google, Outlook, iCloud)</span>
+                  </div>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-xs text-red-700"><strong>Other AI:</strong> Requires OAuth with write permissions to create/edit events in your calendar</p>
+                </div>
+              </div>
+
+              {/* SMS Privacy */}
+              <div className="bg-white rounded-xl p-6 border-2 border-green-200 shadow-lg">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+                </div>
+                <h3 className="font-heading font-bold text-lg text-gray-900 mb-3 text-center">Secure Commands</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700"><strong className="text-green-600">Encrypted SMS</strong> commands</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">You review email drafts before sending</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" className="flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span className="text-sm text-gray-700">Jordyn never sends emails on your behalf</span>
+                  </div>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-xs text-red-700"><strong>Other AI:</strong> Auto-sends emails without your review, exposing your reputation</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 text-center">
+              <div className="inline-block bg-white border-2 border-green-300 rounded-xl p-6 shadow-lg max-w-3xl">
+                <h3 className="font-heading font-bold text-xl text-gray-900 mb-3">The Only AI Assistant Built for Privacy</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  While other AI assistants demand full access to your accounts, Jordyn is designed to <strong className="text-green-600">minimize data exposure</strong>, <strong className="text-green-600">delete sensitive content</strong>, and <strong className="text-green-600">keep you in control</strong>. Your business data deserves better than "trust us with everything."
+                </p>
               </div>
             </div>
           </div>
