@@ -12,19 +12,29 @@ test.describe('Calendar Booking Flow', () => {
 
   test.skip(!testSubscriberId || !testEmail, 'Requires TEST_SUBSCRIBER_ID and TEST_EMAIL env vars')
 
+  // Helper to send SMS webhook in Twilio format
+  async function sendSMS(request: any, body: string) {
+    const formData = new URLSearchParams({
+      From: testPhone,
+      Body: body,
+      To: process.env.TWILIO_PHONE_NUMBER || '+16517287626'
+    })
+
+    return await request.post('/api/webhooks/twilio-sms', {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data: formData.toString()
+    })
+  }
+
   test('should create appointment via SMS command', async ({ request }) => {
     // Simulate SMS webhook from Twilio
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     const dateStr = tomorrow.toISOString().split('T')[0]
 
-    const response = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: `Book meeting with John Doe tomorrow at 2pm for 1 hour`,
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const response = await sendSMS(request, 'Book meeting with John Doe tomorrow at 2pm for 1 hour')
 
     expect(response.status()).toBe(200)
     const data = await response.json()
@@ -34,13 +44,7 @@ test.describe('Calendar Booking Flow', () => {
   })
 
   test('should check calendar availability', async ({ request }) => {
-    const response = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'What\'s on my calendar today?',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const response = await sendSMS(request, 'What\'s on my calendar today?')
 
     expect(response.status()).toBe(200)
     const data = await response.json()
@@ -50,24 +54,12 @@ test.describe('Calendar Booking Flow', () => {
 
   test('should cancel appointment', async ({ request }) => {
     // First create an appointment
-    const createResponse = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'Book test appointment tomorrow at 3pm',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const createResponse = await sendSMS(request, 'Book test appointment tomorrow at 3pm')
 
     expect(createResponse.status()).toBe(200)
 
     // Then cancel it
-    const cancelResponse = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'Cancel my next appointment',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const cancelResponse = await sendSMS(request, 'Cancel my next appointment')
 
     expect(cancelResponse.status()).toBe(200)
     const cancelData = await cancelResponse.json()
@@ -77,22 +69,10 @@ test.describe('Calendar Booking Flow', () => {
 
   test('should detect conflicting appointments', async ({ request }) => {
     // Create first appointment
-    await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'Book meeting tomorrow at 2pm for 1 hour',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    await sendSMS(request, 'Book meeting tomorrow at 2pm for 1 hour')
 
     // Try to create overlapping appointment
-    const conflictResponse = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'Book another meeting tomorrow at 2:30pm for 1 hour',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const conflictResponse = await sendSMS(request, 'Book another meeting tomorrow at 2:30pm for 1 hour')
 
     expect(conflictResponse.status()).toBe(200)
     const data = await conflictResponse.json()
@@ -100,13 +80,7 @@ test.describe('Calendar Booking Flow', () => {
   })
 
   test('should handle invalid date format gracefully', async ({ request }) => {
-    const response = await request.post('/api/webhooks/sms', {
-      data: {
-        From: testPhone,
-        Body: 'Book meeting on invalid-date at 2pm',
-        To: process.env.TWILIO_PHONE_NUMBER
-      }
-    })
+    const response = await sendSMS(request, 'Book meeting on invalid-date at 2pm')
 
     expect(response.status()).toBe(200)
     const data = await response.json()
