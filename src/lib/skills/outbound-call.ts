@@ -41,8 +41,11 @@ export async function makeOutboundCall(
     const systemPrompt = await generateSystemPrompt(params, callType)
 
     // 3. Create temporary VAPI assistant
+    // Keep name under 40 chars: use first 8 chars of subscriber ID + timestamp
+    const shortId = params.subscriber.id.substring(0, 8)
+    const timestamp = Date.now().toString().slice(-10)
     const assistant = await createVapiAssistant({
-      name: `${params.subscriber.id}-outbound-${Date.now()}`,
+      name: `ob-${shortId}-${timestamp}`,
       model: {
         provider: 'anthropic',
         model: 'claude-sonnet-4-20250514',
