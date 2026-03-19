@@ -10,11 +10,6 @@ import {
 } from '@/lib/vapi/client'
 import { sendSMS } from '@/lib/twilio/client'
 import { createServiceClient } from '@/lib/supabase/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 interface OutboundCallParams {
   contactName?: string
@@ -38,7 +33,7 @@ export async function makeOutboundCall(
     const callType = detectCallType(params.task)
 
     // 2. Generate custom system prompt
-    const systemPrompt = await generateSystemPrompt(params, callType)
+    const systemPrompt = generateSystemPrompt(params, callType)
 
     // 3. Create temporary VAPI assistant
     // Keep name under 40 chars: use first 8 chars of subscriber ID + timestamp
@@ -178,50 +173,47 @@ function detectCallType(task: string): 'business' | 'personal' | 'campaign' {
 }
 
 /**
- * Generate custom system prompt using OpenAI
+ * Generate custom system prompt template
  */
-async function generateSystemPrompt(
+function generateSystemPrompt(
   params: OutboundCallParams,
   callType: 'business' | 'personal' | 'campaign'
-): Promise<string> {
+): string {
   const maxDuration = callType === 'business' ? 5 : callType === 'personal' ? 2 : 3
+  const contactName = params.contactName || 'there'
+  const botName = params.subscriber.bot_name || 'the assistant'
+  const businessName = params.subscriber.business_name || params.subscriber.name
 
-  const prompt = `Generate a professional system prompt for a VAPI voice AI assistant making an outbound call.
+  return `You are ${botName}, an AI assistant calling on behalf of ${businessName}.
 
-Call details:
-- Calling: ${params.contactName || params.contactNumber}
-- Task: ${params.task}
-- Subscriber: ${params.subscriber.name}
-- Business: ${params.subscriber.business_name || params.subscriber.name}
-- Business type: ${params.subscriber.business_type || 'general'}
-- Bot name: ${params.subscriber.bot_name}
-- Tone: ${params.tone || 'professional'}
-- Call type: ${callType}
-- Max duration: ${maxDuration} minutes
+**CALL PURPOSE:**
+${params.task}
 
-Create a system prompt that:
-1. Instructs the AI to introduce itself properly
-2. States the purpose of the call clearly
-3. Provides specific instructions for this task
-4. Includes escalation rules (when to defer to human)
-5. Defines how to end the call professionally
-6. Keeps the call brief and respectful
+**YOUR APPROACH:**
+- Be ${params.tone || 'professional'} and respectful
+- Introduce yourself: "Hi ${contactName}, this is ${botName} calling from ${businessName}."
+- State your purpose clearly and briefly
+- Listen actively and respond naturally
+- Keep the call under ${maxDuration} minutes
+- If asked about complex details, offer to have ${params.subscriber.name} call them back
 
-Return ONLY the system prompt text, no other commentary.`
+**ESCALATION RULES:**
+- If they want to speak to a human, say: "I'll have ${params.subscriber.name} call you back directly."
+- If you can't answer something, admit it: "Let me have ${params.subscriber.name} follow up with those details."
+- If they're upset or frustrated, apologize and offer: "I understand. Let me have ${params.subscriber.name} reach out to you personally."
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    max_tokens: 1000,
-    temperature: 0.3,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  })
+**ENDING THE CALL:**
+- Summarize any next steps
+- Thank them for their time
+- End politely: "Thanks ${contactName}, have a great day!"
 
-  return response.choices[0].message.content || ''
+**IMPORTANT:**
+- Be conversational, not robotic
+- Don't make promises you can't keep
+- Don't pressure or be pushy
+- Respect if they want to end the call
+
+Stay on task, be helpful, and represent ${businessName} professionally.`
 }
 
 /**
@@ -302,35 +294,17 @@ export async function handleCallCompletion(params: {
 }
 
 /**
- * Generate call summary using OpenAI
+ * Generate call summary from transcript
  */
 async function generateCallSummary(
   transcript: string,
   task: string
 ): Promise<string> {
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      max_tokens: 300,
-      temperature: 0,
-      messages: [
-        {
-          role: 'user',
-          content: `Summarize this outbound call in 2-3 sentences. Focus on outcome and any action items.
-
-Task: ${task}
-
-Transcript:
-${transcript}
-
-Summary:`,
-        },
-      ],
-    })
-
-    return response.choices[0].message.content || 'Call completed. Unable to generate summary.'
-  } catch (error) {
-    console.error('Summary generation error:', error)
-    return 'Call completed. Summary generation failed.'
+  // For now, return the transcript directly
+  // TODO: Add AI summarization if needed
+  if (!transcript || transcript.length < 10) {
+    return `Call completed. Task: ${task}. No transcript available.`
   }
+
+  return `Call completed.\n\nTask: ${task}\n\nTranscript:\n${transcript.substring(0, 500)}${transcript.length > 500 ? '...' : ''}`
 }
