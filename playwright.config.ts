@@ -46,7 +46,9 @@ export default defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'npm run dev',
+    command: process.platform === 'win32'
+      ? 'set NODE_ENV=test&& npm run dev'
+      : 'NODE_ENV=test npm run dev',
     url: 'http://localhost:4000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

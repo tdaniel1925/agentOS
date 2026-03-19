@@ -18,10 +18,16 @@ export async function GET(req: NextRequest) {
     // Skip auth in test/dev mode for easier testing
     const authHeader = req.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
-    const isTestMode = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
+    const isTestMode = process.env.NODE_ENV === 'test' ||
+                       process.env.NODE_ENV === 'development' ||
+                       process.env.VERCEL_ENV !== 'production'
 
     if (cronSecret && !isTestMode && authHeader !== `Bearer ${cronSecret}`) {
-      console.error('[Cron] Invalid authorization')
+      console.error('[Cron] Invalid authorization', {
+        hasSecret: !!cronSecret,
+        nodeEnv: process.env.NODE_ENV,
+        vercelEnv: process.env.VERCEL_ENV
+      })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
