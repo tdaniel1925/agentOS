@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Send response
       if (result.message) {
         console.log('Sending SMS response:', result.message)
-        await sendSMS(fromPhone, result.message)
+        await sendSMS(fromPhone, result.message, toPhone)
         console.log('SMS sent successfully')
       } else {
         console.log('No message in result, not sending SMS')
@@ -535,10 +535,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // HELPER FUNCTIONS
 // =============================================
 
-async function sendSMS(to: string, body: string): Promise<void> {
+async function sendSMS(to: string, body: string, from?: string): Promise<void> {
   const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
   const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
   const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
+
+  const fromNumber = from || TWILIO_PHONE_NUMBER
+
+  console.log(`Sending SMS: TO=${to}, FROM=${fromNumber}`)
 
   await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
     method: 'POST',
@@ -548,7 +552,7 @@ async function sendSMS(to: string, body: string): Promise<void> {
     },
     body: new URLSearchParams({
       To: to,
-      From: TWILIO_PHONE_NUMBER,
+      From: fromNumber,
       Body: body
     })
   })
