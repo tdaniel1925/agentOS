@@ -55,13 +55,7 @@ export async function makeOutboundCall(
       transcriber: {
         provider: 'deepgram',
         model: 'flux-general-en',
-        language: 'en',
       },
-      silenceTimeoutSeconds: 10,
-      maxDurationSeconds: 300,
-      voicemailDetectionEnabled: true,
-      backgroundSound: 'off',
-      firstMessageMode: 'assistant-waits-for-user',
     })
 
     // 4. Get subscriber's VAPI phone number ID from database
