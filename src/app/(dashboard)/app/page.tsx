@@ -10,6 +10,7 @@ import UsageDashboard from '@/components/UsageDashboard'
 import TrialBanner from '@/components/dashboard/TrialBanner'
 import PaymentMethodAlert from '@/components/dashboard/PaymentMethodAlert'
 import PhoneProvisioningAlert from '@/components/dashboard/PhoneProvisioningAlert'
+import CalendarSetupAlert from '@/components/dashboard/CalendarSetupAlert'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -99,6 +100,13 @@ export default async function DashboardPage() {
         <PhoneProvisioningAlert
           subscriberId={subscriber.id}
           businessName={subscriber.business_name}
+        />
+      )}
+
+      {/* Calendar Setup Alert - Show if calendar not connected */}
+      {!subscriber.calendar_url && (
+        <CalendarSetupAlert
+          calendarConnected={!!subscriber.calendar_url}
         />
       )}
 
