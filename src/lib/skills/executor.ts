@@ -28,43 +28,45 @@ export interface ExecutionResult {
 export async function executeSkill(
   intent: SMSIntent,
   context: any,
-  subscriber: any
+  subscriber: any,
+  supabase?: any
 ): Promise<ExecutionResult> {
-  const supabase = createServiceClient()
+  // Use provided supabase client or create one (for backwards compatibility)
+  const db = supabase || createServiceClient()
 
   try {
     // Route to appropriate skill handler
     switch (intent.intent) {
       // CALL RELATED
       case 'CHECK_MISSED_CALLS':
-        return await handleCheckMissedCalls(context, supabase)
+        return await handleCheckMissedCalls(context, db)
 
       case 'CHECK_CALLS':
         return await checkCalls({ subscriber })
 
       case 'MAKE_OUTBOUND_CALL':
-        return await handleMakeOutboundCall(intent, context, subscriber, supabase)
+        return await handleMakeOutboundCall(intent, context, subscriber, db)
 
       case 'UPDATE_GREETING':
-        return await handleUpdateGreeting(intent, subscriber, supabase)
+        return await handleUpdateGreeting(intent, subscriber, db)
 
       case 'PAUSE_CALLS':
       case 'RESUME_CALLS':
-        return await handleCallControl(intent, subscriber, supabase)
+        return await handleCallControl(intent, subscriber, db)
 
       // CONTROL RELATED
       case 'PAUSE_BOT':
       case 'RESUME_BOT':
-        return await handleBotControl(intent, subscriber, supabase)
+        return await handleBotControl(intent, subscriber, db)
 
       case 'CHECK_STATUS':
-        return await handleCheckStatus(context, subscriber, supabase)
+        return await handleCheckStatus(context, subscriber, db)
 
       // REPORT RELATED
       case 'WEEKLY_REPORT':
       case 'CALL_REPORT':
       case 'COST_REPORT':
-        return await handleReport(intent, context, subscriber, supabase)
+        return await handleReport(intent, context, subscriber, db)
 
       // EMAIL RELATED
       case 'CONNECT_EMAIL':
@@ -76,18 +78,18 @@ export async function executeSkill(
       case 'CREATE_CAMPAIGN':
       case 'PAUSE_CAMPAIGN':
       case 'CAMPAIGN_REPORT':
-        return await handleEmailCommand(intent, context, subscriber, supabase)
+        return await handleEmailCommand(intent, context, subscriber, db)
 
       // SOCIAL RELATED
       case 'CREATE_POST':
       case 'SCHEDULE_POSTS':
       case 'SOCIAL_REPORT':
-        return await handleSocialCommand(intent, context, subscriber, supabase)
+        return await handleSocialCommand(intent, context, subscriber, db)
 
       // LEAD RELATED
       case 'GENERATE_LEADS':
       case 'FOLLOW_UP_LEADS':
-        return await handleLeadCommand(intent, context, subscriber, supabase)
+        return await handleLeadCommand(intent, context, subscriber, db)
 
       // CALENDAR RELATED
       case 'CHECK_CALENDAR':
@@ -100,17 +102,17 @@ export async function executeSkill(
       case 'CHECK_SCHEDULE':
       case 'BOOK_APPOINTMENT':
       case 'CANCEL_APPOINTMENT':
-        return await handleAppointmentCommand(intent, context, subscriber, supabase)
+        return await handleAppointmentCommand(intent, context, subscriber, db)
 
       // SKILL MANAGEMENT
       case 'ADD_SKILL':
       case 'REMOVE_SKILL':
-        return await handleSkillManagement(intent, subscriber, supabase)
+        return await handleSkillManagement(intent, subscriber, db)
 
       // UNKNOWN
       case 'UNKNOWN':
       default:
-        return await handleUnknownCommand(intent, subscriber, supabase)
+        return await handleUnknownCommand(intent, subscriber, db)
     }
   } catch (error) {
     console.error('Skill execution error:', error)

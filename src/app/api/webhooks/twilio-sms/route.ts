@@ -125,8 +125,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
       })
 
-      // Execute skill
-      const result = await executeSkill(intent, context, subscriber)
+      // Execute skill (pass supabase client for webhook context)
+      const result = await executeSkill(intent, context, subscriber, supabase)
 
       // Send response
       if (result.message) {
