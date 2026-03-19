@@ -1,196 +1,240 @@
-# Testing Guide
+# Jordyn Testing Guide
 
-## Test Infrastructure
+## Overview
+Comprehensive testing suite for the Jordyn platform covering E2E flows, API endpoints, SMS, calls, email, and calendar.
 
-- **Playwright**: E2E tests for API routes and full flows
-- **Vitest**: Unit tests for individual functions
+## Setup
 
-## Test Results Summary
-
-### Current Status: ✅ 4 PASSED, ⚠️ 9 NEED REFACTOR, ⏭️ 14 SKIPPED
-
-**Passing Tests (4):**
-- ✅ Greeting format validation - business name required
-- ✅ Greeting format validation - receptionist prompt format
-- ✅ Greeting format validation - includes "ANSWERING" keyword
-- ✅ Greeting format validation - end call message format
-
-**Tests Needing Refactor (9):**
-Calendar tests (5) - Webhook returns TwiML XML but tests expect JSON:
-- ⚠️ Calendar booking via SMS
-- ⚠️ Check calendar availability
-- ⚠️ Cancel appointment
-- ⚠️ Detect conflicting appointments
-- ⚠️ Handle invalid date format
-
-Cron tests (4) - Need CRON_SECRET environment variable:
-- ⚠️ Cron auth requirement
-- ⚠️ Cron statistics
-- ⚠️ Cron POST method
-- ⚠️ Cron timeout
-
-**Skipped Tests (14) - Require live APIs/database:**
-- ⏭️ VAPI assistant creation tests (need VAPI_API_KEY)
-- ⏭️ Time-based reminder tests (need test appointments)
-- ⏭️ Email invite tests (need Resend mocking)
-
-**Why Calendar Tests Need Refactor:**
-The Twilio SMS webhook correctly returns TwiML XML for Twilio compatibility:
-```xml
-<?xml version="1.0" encoding="UTF-8"?><Response></Response>
+### 1. Install Dependencies
+```bash
+npm install
 ```
 
-Tests expect JSON but production correctly returns XML. To fix:
-1. Parse XML/TwiML responses in tests
-2. Or verify database state instead of HTTP response
-3. Or create separate test endpoint that returns JSON
-
-**Why Cron Tests Need Refactor:**
-CRON_SECRET is set in .env.local but Playwright doesn't inherit it. To fix:
+### 2. Configure Test Environment
+Create `.env.test` file:
 ```bash
-# Set before running tests:
-set CRON_SECRET=test-secret-123 && npx playwright test
+# Test Environment
+TEST_ENV=development  # or 'production' for prod testing
+TEST_BASE_URL=http://localhost:4000  # or https://jordyn.app
 
-# Or create .env.test file
-# Or disable auth check in dev/test mode
+# Test Credentials
+TEST_PHONE_NUMBER=+15555551234
+TEST_EMAIL=test@jordyn.app
+PROD_TEST_PHONE_NUMBER=+15555559999  # Dedicated prod test number
+
+# Twilio Test Credentials (for webhook testing)
+TEST_TWILIO_NUMBER=+16517287626
 ```
 
 ## Running Tests
 
-### Option 1: Manual Dev Server (Recommended)
-
+### E2E Tests (Playwright)
 ```bash
-# Terminal 1: Start dev server
-npm run dev
-
-# Terminal 2: Run E2E tests
+# Run all E2E tests
 npm run test:e2e
-```
 
-### Option 2: Playwright Auto-Start (Not Working on Windows)
-
-The `webServer` config in `playwright.config.ts` doesn't work on Windows due to the `set` command in npm scripts.
-
-```bash
-# This will fail on Windows:
-npm run test:e2e
-```
-
-**Fix needed**: Update `package.json` dev script to use cross-platform env vars or disable `webServer` in playwright config.
-
-## Test Files
-
-### E2E Tests (`tests/e2e/`)
-
-**`calendar-booking.spec.ts`**
-- Tests SMS-based appointment booking
-- Tests calendar availability checking
-- Tests appointment cancellation
-- Tests conflict detection
-
-**`reminder-cron.spec.ts`**
-- Tests cron job authentication
-- Tests reminder statistics
-- Tests time windows (24h, 1h, 15m)
-- Tests duplicate prevention
-
-**`phone-provisioning.spec.ts`**
-- Tests VAPI assistant creation
-- Tests greeting message format
-- Tests receptionist vs. caller tone
-
-## Environment Variables for Testing
-
-```
-# Required for E2E tests
-NEXT_PUBLIC_APP_URL=http://localhost:4000
-TEST_SUBSCRIBER_ID=test-subscriber-uuid
-TEST_EMAIL=test@example.com
-TEST_PHONE=+12815058290
-
-# Required for cron tests
-CRON_SECRET=your-test-secret
-
-# Required for VAPI tests (currently skipped)
-VAPI_API_KEY=your-vapi-key
-
-# Required for Twilio webhook tests
-TWILIO_PHONE_NUMBER=+1234567890
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_ACCOUNT_SID=your-account-sid
-
-# Required for Supabase
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-## Known Issues
-
-### Issue 1: Dev Server Not Auto-Starting
-**Problem**: Playwright `webServer` doesn't work with Windows `set` command in npm scripts
-**Workaround**: Start dev server manually in separate terminal
-
-### Issue 2: API Tests Need Live Database
-**Problem**: Tests hit real Supabase database
-**Solution**: Add `TEST_SUBSCRIBER_ID` env var pointing to test subscriber
-
-### Issue 3: Time-Sensitive Tests Skipped
-**Problem**: Reminder tests need appointments at exact times (24h, 1h, 15m away)
-**Solution**: Create test data setup script or mock Date.now()
-
-## Next Steps for Full Test Coverage
-
-1. **Fix webServer on Windows**
-   - Use cross-env package
-   - Or update playwright config to disable webServer
-
-2. **Add test database**
-   - Use Supabase local development
-   - Or add test subscriber fixture
-
-3. **Mock external APIs**
-   - Mock VAPI responses
-   - Mock Twilio webhooks
-   - Mock Resend email sending
-
-4. **Add unit tests**
-   - Test CalDAV reader
-   - Test ICS generator
-   - Test reminder time window logic
-   - Test date parsing
-
-5. **Add integration tests**
-   - Test full SMS → parse → execute → respond flow
-   - Test full reminder → check → send → mark flow
-
-## Running Specific Tests
-
-```bash
-# Run only calendar tests
-npx playwright test calendar-booking
-
-# Run only cron tests
-npx playwright test reminder-cron
-
-# Run with UI
+# Run in UI mode (interactive)
 npm run test:e2e:ui
 
+# Run specific test file
+npx playwright test tests/e2e/01-signup.spec.ts
+
+# Run against production (use with caution!)
+TEST_ENV=production npm run test:e2e
+```
+
+### API Tests (Vitest)
+```bash
+# Run all unit/API tests
+npm test
+
+# Run in watch mode
+npm test -- --watch
+
+# Run with UI
+npm run test:ui
+
 # Run specific test
-npx playwright test -g "validates business name"
+npm test tests/api/twilio-sms.test.ts
+```
+
+## Test Structure
+
+```
+tests/
+├── e2e/                    # End-to-end Playwright tests
+│   ├── 01-signup.spec.ts          # User signup flow
+│   ├── 02-sms-commands.spec.ts    # SMS command testing
+│   ├── 03-email-forwarding.spec.ts # Email ephemeral processing
+│   ├── 04-calendar.spec.ts         # Calendar integration
+│   └── 05-vapi-calls.spec.ts      # Voice call testing
+├── api/                    # API endpoint tests
+│   ├── twilio-sms.test.ts         # Twilio SMS webhook
+│   ├── postmark-email.test.ts     # Postmark inbound email
+│   └── vapi-webhook.test.ts       # VAPI call webhook
+├── helpers/                # Test utilities
+│   ├── twilio-helper.ts           # Twilio test helpers
+│   ├── email-helper.ts            # Email testing utilities
+│   └── cleanup.ts                 # Test data cleanup
+├── fixtures/               # Test data
+│   ├── test-users.json
+│   └── sample-emails.json
+└── config/                 # Test configuration
+    └── test-env.ts                # Environment setup
+```
+
+## Test Scenarios
+
+### 1. User Signup & Onboarding
+- ✅ Complete signup flow
+- ✅ Dashboard loads with unique email address
+- ✅ Privacy features displayed
+- ✅ 9 feature cards in 3x3 grid
+
+### 2. SMS Commands
+- ✅ STATUS command
+- ✅ CALL command (outbound)
+- ✅ HELP command
+- ✅ Unknown command handling
+- ✅ Command logging
+
+### 3. Email Forwarding
+- ✅ Receive forwarded email
+- ✅ Claude analysis triggers
+- ✅ SMS summary sent
+- ✅ Email deleted after 60 seconds
+- ✅ Only metadata stored
+
+### 4. Calendar Integration
+- ✅ iCal feed parsing
+- ✅ Availability checking
+- ✅ Read-only access (no OAuth)
+- ✅ Timezone handling
+
+### 5. Voice Calls (VAPI)
+- ✅ Inbound call answered
+- ✅ Appointment booking conversation
+- ✅ Call summary generated
+- ✅ SMS notification sent
+
+## Production Testing Safety
+
+### Safe Testing Practices
+1. **Use Dedicated Test Numbers**: Never use real customer numbers
+2. **Test User Prefix**: All test users start with `e2e-test-` or `prod-test-`
+3. **Auto-Cleanup**: Test data auto-deleted after 1 hour
+4. **Read-Only When Possible**: Most prod tests are read-only
+5. **Isolated Test Data**: Tests never touch real user data
+
+### Production Test Checklist
+- [ ] Created dedicated test phone number in Twilio
+- [ ] Set up test user account with `prod-test-` prefix
+- [ ] Verified test data cleanup is working
+- [ ] Confirmed tests only use test identifiers
+- [ ] Reviewed test logs for any real user interaction
+
+## Manual Testing Checklist
+
+### SMS Testing
+```bash
+# Send test SMS to Jordyn's number
+# From your test phone: +15555551234
+# To: +16517287626
+# Message: STATUS
+
+# Expected response: Current system status
+```
+
+### Email Testing
+```bash
+# Forward an email to your unique Jordyn address
+# To: u-abc12345@mail.jordyn.app
+# Subject: Test Email
+# Body: This is a test
+
+# Expected: SMS summary within 5 seconds
+# Expected: Email deleted from DB within 60 seconds
+```
+
+### Call Testing
+```bash
+# Call Jordyn's number from test phone
+# Number: +16517287626
+
+# Expected: AI answers within 2 rings
+# Expected: Natural conversation flow
+# Expected: SMS summary after call ends
 ```
 
 ## CI/CD Integration
 
-For GitHub Actions or Vercel:
-
+### GitHub Actions Example
 ```yaml
-- name: Run E2E tests
-  run: |
-    npm run dev &
-    sleep 10
-    npm run test:e2e
-  env:
-    NEXT_PUBLIC_APP_URL: http://localhost:4000
-    CRON_SECRET: ${{ secrets.CRON_SECRET }}
-    TEST_SUBSCRIBER_ID: ${{ secrets.TEST_SUBSCRIBER_ID }}
+name: E2E Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install
+      - run: npx playwright install --with-deps
+      - run: npm run test:e2e
+        env:
+          TEST_ENV: production
+          TEST_PHONE_NUMBER: ${{ secrets.TEST_PHONE_NUMBER }}
 ```
+
+## Debugging Tests
+
+### View Test Reports
+```bash
+# After running E2E tests
+npx playwright show-report
+
+# View screenshots of failures
+ls -la test-results/
+```
+
+### Enable Debug Mode
+```bash
+# Playwright debug mode
+DEBUG=pw:api npm run test:e2e
+
+# Vitest debug mode
+npm test -- --reporter=verbose
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Test fails: "Phone number not found"**
+- Ensure TEST_PHONE_NUMBER is set in .env.test
+- Verify phone number exists in subscribers table
+
+**Email test fails: "Email not received"**
+- Check Postmark webhook is configured
+- Verify MX record points to inbound.postmarkapp.com
+- Confirm POSTMARK_API_KEY is valid
+
+**Call test fails: "VAPI webhook not responding"**
+- Verify VAPI_WEBHOOK_SECRET is correct
+- Check VAPI assistant is configured
+- Ensure webhook URL is accessible
+
+## Coverage Goals
+
+- [ ] E2E Coverage: >80%
+- [ ] API Coverage: >90%
+- [ ] Critical Paths: 100%
+
+## Next Steps
+
+1. **Set up CI/CD**: Automate tests on every PR
+2. **Add Performance Tests**: Load testing for webhooks
+3. **Expand Email Tests**: Test different email providers
+4. **Calendar Edge Cases**: Test various calendar formats
+5. **Security Tests**: Test authentication and authorization
