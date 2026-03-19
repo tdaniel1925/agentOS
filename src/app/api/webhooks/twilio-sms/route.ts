@@ -59,6 +59,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } = params
 
     console.log(`📨 Incoming SMS from ${fromPhone}: "${messageBody}"`)
+    console.log('From phone raw value:', JSON.stringify(fromPhone))
+    console.log('From phone length:', fromPhone?.length)
+    console.log('From phone charCodes:', fromPhone?.split('').map((c: string) => c.charCodeAt(0)))
 
     // =============================================
     // CHECK 1: Is sender an Apex rep?
