@@ -52,8 +52,8 @@ export async function makeOutboundCall(
         systemPrompt: systemPrompt,
       },
       voice: {
-        provider: 'playht',
-        voiceId: 'jennifer', // Professional female voice
+        provider: 'elevenlabs',
+        voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female voice
       },
       firstMessage: generateFirstMessage(params),
       recordingEnabled: true,
