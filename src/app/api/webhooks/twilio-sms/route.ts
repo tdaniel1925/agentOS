@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { parseDemoRequest, generateProspectSMS } from '@/lib/ai/demo-parser'
 import { getIndustryPrompt } from '@/lib/ai/industry-prompts'
 
@@ -23,14 +23,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log('🚀 SMS webhook called (V2 - NLP enabled)')
 
     // Load environment variables
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
     const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
     const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER!
 
-    // Create Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    // Create Supabase client with service role
+    const supabase = createServiceClient()
 
     // Parse form data from Twilio
     const formData = await request.formData()
