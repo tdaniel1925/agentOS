@@ -14,21 +14,16 @@ export const maxDuration = 60 // 60 seconds max
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify cron secret (Vercel sets this header)
-    // Skip auth in test/dev mode for easier testing
-    const authHeader = req.headers.get('authorization')
+    // Cron auth: Only enforce in production with VERCEL_ENV=production
+    const isProduction = process.env.VERCEL_ENV === 'production'
     const cronSecret = process.env.CRON_SECRET
-    const isTestMode = process.env.NODE_ENV === 'test' ||
-                       process.env.NODE_ENV === 'development' ||
-                       process.env.VERCEL_ENV !== 'production'
 
-    if (cronSecret && !isTestMode && authHeader !== `Bearer ${cronSecret}`) {
-      console.error('[Cron] Invalid authorization', {
-        hasSecret: !!cronSecret,
-        nodeEnv: process.env.NODE_ENV,
-        vercelEnv: process.env.VERCEL_ENV
-      })
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (isProduction && cronSecret) {
+      const authHeader = req.headers.get('authorization')
+      if (authHeader !== `Bearer ${cronSecret}`) {
+        console.error('[Cron] Unauthorized access attempt in production')
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     console.log('[Cron] Starting appointment reminders check...')

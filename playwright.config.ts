@@ -46,11 +46,11 @@ export default defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: process.platform === 'win32'
-      ? 'set NODE_ENV=test&& npm run dev'
-      : 'NODE_ENV=test npm run dev',
+    command: 'npm run dev',
     url: 'http://localhost:4000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false, // Always start fresh for tests
     timeout: 120000,
+    // Don't set VERCEL_ENV - let it default to undefined (not production)
+    // This allows cron routes to skip auth in test/dev
   },
 })
