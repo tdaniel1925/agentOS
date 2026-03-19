@@ -44,7 +44,6 @@ export async function makeOutboundCall(
       model: {
         provider: 'openai',
         model: 'gpt-4o-mini',
-        temperature: 0.8,
         systemPrompt: systemPrompt,
       },
       voice: {
