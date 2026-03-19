@@ -45,7 +45,7 @@ export async function makeOutboundCall(
       name: `${params.subscriber.id}-outbound-${Date.now()}`,
       model: {
         provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514',
         systemPrompt: systemPrompt,
       },
       voice: {
@@ -101,7 +101,7 @@ export async function makeOutboundCall(
     const confirmMessage = `Calling ${params.contactName || params.contactNumber} now. I'll text you a summary when done.`
 
     await sendSMS({
-      to: params.subscriber.contact_phone,
+      to: params.subscriber.control_phone,
       body: confirmMessage,
     })
 
@@ -114,7 +114,7 @@ export async function makeOutboundCall(
 
     // Notify subscriber of failure
     await sendSMS({
-      to: params.subscriber.contact_phone,
+      to: params.subscriber.control_phone,
       body: `Couldn't connect the call to ${params.contactName || params.contactNumber}. Error: ${error}`,
     })
 
@@ -200,7 +200,7 @@ Create a system prompt that:
 Return ONLY the system prompt text, no other commentary.`
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: 1000,
     temperature: 0.3,
     messages: [
@@ -259,16 +259,16 @@ export async function handleCallCompletion(params: {
     // Get subscriber contact info
     const subscriberQueryResult: any = await (supabase as any)
       .from('subscribers')
-      .select('contact_phone, name')
+      .select('control_phone, name')
       .eq('id', params.subscriberId)
       .single()
 
     const subscriber = subscriberQueryResult.data
 
-    if (subscriber?.contact_phone) {
+    if (subscriber?.control_phone) {
       // Send summary to subscriber
       await sendSMS({
-        to: subscriber.contact_phone,
+        to: subscriber.control_phone,
         body: `Call completed with ${params.metadata.contact_name || 'contact'}:\n\n${summary}`,
       })
     }
