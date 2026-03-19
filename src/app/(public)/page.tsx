@@ -361,8 +361,12 @@ export default function HomePage() {
                 <div className="feature-icon-bg w-12 h-12 rounded-large flex items-center justify-center mb-4">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 </div>
-                <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Books Appointments</h3>
-                <p className="text-gray-600 text-sm leading-relaxed"><span className="font-semibold">Jordyn.</span> checks your calendar and books appointments in real-time, sending confirmations automatically to both you and your customer.</p>
+                <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Smart Calendar Booking</h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-3"><span className="font-semibold">Jordyn.</span> connects to any calendar (Google, Outlook, iCloud), checks for conflicts, and books appointments automatically. Email invites sent to both parties instantly.</p>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-green-700 text-xs font-semibold">Privacy-First: Read-only access, no OAuth</span>
+                </div>
               </div>
 
               <div className="card-gradient rounded-large p-6 border border-brand-200 shadow-custom hover:shadow-custom-hover transition-all hover:-translate-y-1">
@@ -422,7 +426,7 @@ export default function HomePage() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path></svg>
                   </div>
                   <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Connect Your Business</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">Share your website URL, FAQs, and service details. <span className="font-semibold">Jordyn.</span> learns everything about your business in seconds.</p>
+                  <p className="text-gray-600 text-sm leading-relaxed">Share your website URL, FAQs, and calendar link. <span className="font-semibold">Jordyn.</span> learns your business and checks availability automatically — no OAuth needed, just a read-only calendar feed.</p>
                 </div>
               </div>
 
@@ -600,6 +604,8 @@ export default function HomePage() {
                 <div className="space-y-3 mb-8 text-left">
                   <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Unlimited calls answered 24/7</span></div>
                   <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Automatic appointment booking</span></div>
+                  <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Connects to any calendar (Google, Outlook, etc.)</span></div>
+                  <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Email invites sent automatically</span></div>
                   <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Custom business training</span></div>
                   <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">Text-to-action commands</span></div>
                   <div className="flex items-center gap-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span className="text-white text-sm">ElevenLabs natural voice</span></div>
