@@ -363,9 +363,9 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Smart Calendar Booking</h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-3"><span className="font-semibold">Jordyn.</span> connects to any calendar (Google, Outlook, iCloud), checks for conflicts, and books appointments automatically. Email invites sent to both parties instantly.</p>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span className="text-green-700 text-xs font-semibold">Privacy-First: Read-only access, no OAuth</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600 border border-green-700">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-white text-xs font-semibold">Privacy-First: Read-only access, no OAuth</span>
                 </div>
               </div>
 
@@ -375,9 +375,9 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-gray-900 mb-2">Ephemeral Email Processing</h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-3">Forward emails to your unique Jordyn address. AI analyzes and texts you summaries. <strong className="text-green-600">Full content deleted in 60 seconds</strong>. Only metadata stored.</p>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span className="text-green-700 text-xs font-semibold">Industry-first: 60-second deletion</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600 border border-green-700">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-white text-xs font-semibold">Industry-first: 60-second deletion</span>
                 </div>
               </div>
 
@@ -471,9 +471,9 @@ export default function HomePage() {
         <section className="py-20" style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)', maxHeight: '800px' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border-2 border-green-500 mb-4">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                <span className="text-green-700 text-sm font-bold">Privacy-First by Design</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 border-2 border-green-700 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span className="text-white text-sm font-bold">Privacy-First by Design</span>
               </div>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl text-gray-900 mb-4" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
                 Why <span className="text-green-600">Jordyn</span> is Safer Than Other AI Assistants
