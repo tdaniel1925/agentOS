@@ -152,9 +152,9 @@ export default function HomePage() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
               {/* Left Content */}
               <div className="text-center lg:text-left z-10 pb-16 lg:pb-24">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border-2 border-green-500 shadow-custom mb-6">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span className="text-sm font-bold text-green-700">Privacy-First AI Assistant</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 border-2 border-green-700 shadow-custom mb-6">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span className="text-sm font-bold text-white">Privacy-First AI Assistant</span>
                 </div>
 
                 <h1 className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight mb-6" style={{ letterSpacing: 'var(--letter-spacing-heading)' }}>
