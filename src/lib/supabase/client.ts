@@ -26,60 +26,48 @@ export function createClient() {
     keyType: supabaseAnonKey.startsWith('sb_publishable_') ? 'NEW_PUBLISHABLE_KEY' : 'LEGACY_JWT_KEY'
   })
 
-  return createBrowserClient<Database>(
+  // Let Supabase handle cookies automatically - don't override
+  const client = createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey,
     {
-      cookies: {
-        get(name: string) {
-          if (typeof document === 'undefined') return undefined
-          const value = document.cookie
-            .split('; ')
-            .find(row => row.startsWith(`${name}=`))
-            ?.split('=')[1]
-          return value
-        },
-        set(name: string, value: string, options: any) {
-          if (typeof document === 'undefined') return
+      auth: {
+        flowType: 'pkce',
+        storage: {
+          getItem: (key: string) => {
+            if (typeof window === 'undefined') return null
+            const value = document.cookie
+              .split('; ')
+              .find(row => row.startsWith(`${key}=`))
+              ?.split('=')[1]
+            console.log('🔑 Storage get:', key, value ? 'Found' : 'Not found')
+            return value || null
+          },
+          setItem: (key: string, value: string) => {
+            if (typeof window === 'undefined') return
 
-          // Build cookie string with all necessary attributes
-          const cookieOptions = []
-          cookieOptions.push(`${name}=${value}`)
-          cookieOptions.push(`path=${options?.path || '/'}`)
+            // Set cookie with proper attributes for cross-page persistence
+            const cookieString = [
+              `${key}=${value}`,
+              'path=/',
+              'max-age=31536000', // 1 year
+              'SameSite=Lax',
+              window.location.protocol === 'https:' ? 'Secure' : ''
+            ].filter(Boolean).join('; ')
 
-          // Set max-age (default to 1 year if not specified)
-          const maxAge = options?.maxAge ?? 31536000
-          cookieOptions.push(`max-age=${maxAge}`)
-
-          // SameSite should be Lax for auth cookies
-          cookieOptions.push(`samesite=${options?.sameSite || 'lax'}`)
-
-          // Only set secure in production (https)
-          if (window.location.protocol === 'https:') {
-            cookieOptions.push('secure')
+            document.cookie = cookieString
+            console.log('🔑 Storage set:', key, '✅')
+          },
+          removeItem: (key: string) => {
+            if (typeof window === 'undefined') return
+            document.cookie = `${key}=; path=/; max-age=0`
+            console.log('🔑 Storage remove:', key)
           }
-
-          const cookieString = cookieOptions.join('; ')
-          document.cookie = cookieString
-
-          console.log('🍪 Set cookie:', name, 'path=/', 'sameSite=lax', window.location.protocol === 'https:' ? 'secure' : 'not-secure')
-
-          // Verify it was set
-          const verification = document.cookie.includes(name)
-          console.log('🍪 Cookie verification:', verification ? '✅ Found' : '❌ Not found')
-        },
-        remove(name: string, options: any) {
-          if (typeof document === 'undefined') return
-          let cookie = `${name}=; max-age=0`
-          if (options?.path) {
-            cookie += `; path=${options.path}`
-          } else {
-            cookie += '; path=/'
-          }
-          document.cookie = cookie
-          console.log('🗑️ Removed cookie:', name)
-        },
-      },
+        }
+      }
     }
   )
+
+  console.log('✅ Supabase client created')
+  return client
 }
