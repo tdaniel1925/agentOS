@@ -25,8 +25,14 @@ export default async function AgentConfigPage() {
     .eq('auth_user_id', session.user.id)
     .maybeSingle()
 
-  if (!subscriberResult.data || subscriberResult.error) {
-    redirect('/onboarding')
+  if (subscriberResult.error) {
+    console.error('Agent page - subscriber query error:', subscriberResult.error)
+    redirect('/onboard')
+  }
+
+  if (!subscriberResult.data) {
+    console.error('Agent page - no subscriber found for user:', session.user.id)
+    redirect('/onboard')
   }
 
   const subscriberId = subscriberResult.data.id

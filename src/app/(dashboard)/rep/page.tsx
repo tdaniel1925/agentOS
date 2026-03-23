@@ -24,6 +24,34 @@ export default async function RepDashboardPage() {
     .eq('email', user.email)
     .single()
 
+  // Check for errors first
+  if (repResult.error) {
+    console.error('Rep dashboard - rep query error:', repResult.error)
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1B3A7D] to-[#0F2347] flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-12 max-w-md w-full text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#1B3A7D]/10 rounded-full mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-[#1B3A7D]">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-[#1B3A7D] mb-3">
+            Rep Access Required
+          </h1>
+          <p className="text-gray-600 mb-2">
+            Your account is not registered as a rep in the system.
+          </p>
+          <p className="text-sm text-gray-500">
+            Contact support if you believe this is an error.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const rep = repResult.data
 
   if (!rep) {
@@ -93,6 +121,10 @@ export default async function RepDashboardPage() {
     `)
     .eq('rep_code', rep.apex_rep_code)
     .order('created_at', { ascending: false })
+
+  if (subscribersResult.error) {
+    console.error('Rep dashboard - subscribers query error:', subscribersResult.error)
+  }
 
   const subscribers = subscribersResult.data
 
