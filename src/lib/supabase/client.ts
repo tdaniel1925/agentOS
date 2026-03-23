@@ -26,44 +26,47 @@ export function createClient() {
     keyType: supabaseAnonKey.startsWith('sb_publishable_') ? 'NEW_PUBLISHABLE_KEY' : 'LEGACY_JWT_KEY'
   })
 
-  // Let Supabase handle cookies automatically - don't override
+  // Use localStorage instead of cookies temporarily for debugging
   const client = createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey,
     {
       auth: {
-        flowType: 'pkce',
         storage: {
           getItem: (key: string) => {
             if (typeof window === 'undefined') return null
-            const value = document.cookie
-              .split('; ')
-              .find(row => row.startsWith(`${key}=`))
-              ?.split('=')[1]
-            console.log('🔑 Storage get:', key, value ? 'Found' : 'Not found')
-            return value || null
+            try {
+              const value = window.localStorage.getItem(key)
+              console.log('🔑 LocalStorage get:', key, value ? 'Found' : 'Not found')
+              return value
+            } catch (e) {
+              console.error('🔑 LocalStorage get error:', e)
+              return null
+            }
           },
           setItem: (key: string, value: string) => {
             if (typeof window === 'undefined') return
-
-            // Set cookie with proper attributes for cross-page persistence
-            const cookieString = [
-              `${key}=${value}`,
-              'path=/',
-              'max-age=31536000', // 1 year
-              'SameSite=Lax',
-              window.location.protocol === 'https:' ? 'Secure' : ''
-            ].filter(Boolean).join('; ')
-
-            document.cookie = cookieString
-            console.log('🔑 Storage set:', key, '✅')
+            try {
+              window.localStorage.setItem(key, value)
+              console.log('🔑 LocalStorage set:', key, '✅')
+            } catch (e) {
+              console.error('🔑 LocalStorage set error:', e)
+            }
           },
           removeItem: (key: string) => {
             if (typeof window === 'undefined') return
-            document.cookie = `${key}=; path=/; max-age=0`
-            console.log('🔑 Storage remove:', key)
+            try {
+              window.localStorage.removeItem(key)
+              console.log('🔑 LocalStorage remove:', key)
+            } catch (e) {
+              console.error('🔑 LocalStorage remove error:', e)
+            }
           }
-        }
+        },
+        storageKey: 'supabase-auth-token',
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
       }
     }
   )
