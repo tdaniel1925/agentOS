@@ -26,12 +26,33 @@ export function createClient() {
     keyType: supabaseAnonKey.startsWith('sb_publishable_') ? 'NEW_PUBLISHABLE_KEY' : 'LEGACY_JWT_KEY'
   })
 
-  // Use default Supabase browser client - it handles cookies automatically
+  // Configure to use cookies that server can read
   const client = createBrowserClient<Database>(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name: string) {
+          const value = document.cookie.split('; ').find(row => row.startsWith(`${name}=`))?.split('=')[1]
+          console.log('🍪 Browser: Get cookie', name, value ? '✅ Found' : '❌ Not found')
+          return value
+        },
+        set(name: string, value: string, options: any) {
+          let cookie = `${name}=${value}; path=/; max-age=31536000; SameSite=Lax`
+          if (window.location.protocol === 'https:') {
+            cookie += '; Secure'
+          }
+          document.cookie = cookie
+          console.log('🍪 Browser: Set cookie', name, '✅')
+        },
+        remove(name: string, options: any) {
+          document.cookie = `${name}=; path=/; max-age=0`
+          console.log('🍪 Browser: Remove cookie', name, '✅')
+        }
+      }
+    }
   )
 
-  console.log('✅ Supabase browser client created (using default cookie storage)')
+  console.log('✅ Supabase browser client created with cookie storage')
   return client
 }
