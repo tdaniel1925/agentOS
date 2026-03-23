@@ -17,10 +17,12 @@ import { assignJordynEmailAddress } from '@/lib/email/address-generator'
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // Get current user
+  // Get current user - auth check is handled by layout.tsx
   const { data: { user } } = await supabase.auth.getUser()
+
+  // If no user, return early - layout will redirect
   if (!user) {
-    redirect('/login')
+    return <div>Loading...</div>
   }
 
   // Get subscriber data - using untyped query to bypass TypeScript inference issue
@@ -30,17 +32,17 @@ export default async function DashboardPage() {
     .eq('auth_user_id', user.id)
     .single()
 
-  // Check for errors first
-  if (subscriberResult.error) {
-    console.error('Dashboard - subscriber query error:', subscriberResult.error)
-    redirect('/onboard')
-  }
-
   const subscriber = subscriberResult.data
 
+  // If no subscriber, show message - don't redirect
   if (!subscriber) {
-    console.error('Dashboard - no subscriber found for user:', user.id)
-    redirect('/onboard')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-gray-600">Setting up your account...</p>
+        </div>
+      </div>
+    )
   }
 
   // Assign Jordyn email address if not already assigned
