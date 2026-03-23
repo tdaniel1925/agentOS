@@ -30,7 +30,8 @@ export default async function UsagePage() {
     .maybeSingle()
 
   if (subscriberError || !subscriberData) {
-    redirect('/onboarding')
+    console.error('Usage page - subscriber error:', subscriberError)
+    redirect('/onboard')
   }
 
   const subscriber = subscriberData as Subscriber

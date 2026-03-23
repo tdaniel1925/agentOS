@@ -30,9 +30,16 @@ export default async function DashboardPage() {
     .eq('auth_user_id', user.id)
     .single()
 
+  // Check for errors first
+  if (subscriberResult.error) {
+    console.error('Dashboard - subscriber query error:', subscriberResult.error)
+    redirect('/onboard')
+  }
+
   const subscriber = subscriberResult.data
 
   if (!subscriber) {
+    console.error('Dashboard - no subscriber found for user:', user.id)
     redirect('/onboard')
   }
 

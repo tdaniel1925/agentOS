@@ -19,14 +19,20 @@ export default async function CallLogsPage() {
   }
 
   // Get subscriber
-  const { data: subscriber }: any = await supabase
+  const { data: subscriber, error: subscriberError }: any = await supabase
     .from('subscribers')
     .select('*')
     .eq('auth_user_id', session.user.id)
     .single()
 
+  if (subscriberError) {
+    console.error('Calls page - subscriber query error:', subscriberError)
+    redirect('/onboard')
+  }
+
   if (!subscriber) {
-    redirect('/onboarding')
+    console.error('Calls page - no subscriber found for user:', session.user.id)
+    redirect('/onboard')
   }
 
   // Get all calls

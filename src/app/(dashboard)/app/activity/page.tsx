@@ -23,9 +23,16 @@ export default async function ActivityLogPage() {
     .eq('auth_user_id', user.id)
     .single()
 
+  // Check for errors first
+  if (subscriberResult.error) {
+    console.error('Activity page - subscriber query error:', subscriberResult.error)
+    redirect('/onboard')
+  }
+
   const subscriber = subscriberResult.data
 
   if (!subscriber) {
+    console.error('Activity page - no subscriber found for user:', user.id)
     redirect('/onboard')
   }
 
