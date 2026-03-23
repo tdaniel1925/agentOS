@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 
 export default function TestCookiePage() {
   const [testResult, setTestResult] = useState<string>('')
+  const [allCookies, setAllCookies] = useState<string>('')
 
   useEffect(() => {
     // Try to set a test cookie
@@ -23,6 +24,8 @@ export default function TestCookiePage() {
 
     console.log('🧪 All cookies:', cookies)
     console.log('🧪 Test cookie found:', found)
+
+    setAllCookies(cookies || '(none)')
 
     if (found) {
       setTestResult('✅ SUCCESS: Cookies work! Found test cookie in document.cookie')
@@ -51,7 +54,7 @@ export default function TestCookiePage() {
         <div className="bg-white rounded-lg shadow p-6 mb-4">
           <h2 className="font-bold mb-2">All Browser Cookies:</h2>
           <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto">
-            {document.cookie || '(none)'}
+            {allCookies || 'Loading...'}
           </pre>
         </div>
 
