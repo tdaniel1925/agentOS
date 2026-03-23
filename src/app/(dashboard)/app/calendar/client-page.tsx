@@ -17,10 +17,10 @@ export default function CalendarSetupClientPage() {
       try {
         const supabase = createClient()
 
-        // Get current user
+        // Get current user (layout already verified auth)
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('📅 Calendar: No user found')
+          console.error('📅 Calendar: No user found (unexpected - layout should handle auth)')
           setLoading(false)
           return
         }

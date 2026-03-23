@@ -6,11 +6,9 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function CallLogsClientPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [subscriber, setSubscriber] = useState<any>(null)
   const [calls, setCalls] = useState<any[]>([])
@@ -20,11 +18,11 @@ export default function CallLogsClientPage() {
       try {
         const supabase = createClient()
 
-        // Get current user
+        // Get current user (layout already verified auth)
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('📞 Calls: No user found')
-          router.push('/login')
+          console.error('📞 Calls: No user found (unexpected - layout should handle auth)')
+          setLoading(false)
           return
         }
 
@@ -39,13 +37,13 @@ export default function CallLogsClientPage() {
 
         if (subscriberResult.error) {
           console.error('Calls page - subscriber query error:', subscriberResult.error)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
         if (!subscriberResult.data) {
           console.error('Calls page - no subscriber found for user:', user.id)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
@@ -70,7 +68,7 @@ export default function CallLogsClientPage() {
     }
 
     loadCallsData()
-  }, [router])
+  }, [])
 
   if (loading) {
     return (

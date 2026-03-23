@@ -6,11 +6,9 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import AgentConfigForm from '@/components/dashboard/AgentConfigForm'
 
 export default function AgentConfigClientPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [subscriberId, setSubscriberId] = useState<string | null>(null)
   const [agent, setAgent] = useState<any>(null)
@@ -20,11 +18,11 @@ export default function AgentConfigClientPage() {
       try {
         const supabase = createClient()
 
-        // Get current user
+        // Get current user (layout already verified auth)
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('🤖 Agent: No user found')
-          router.push('/login')
+          console.error('🤖 Agent: No user found (unexpected - layout should handle auth)')
+          setLoading(false)
           return
         }
 
@@ -39,13 +37,13 @@ export default function AgentConfigClientPage() {
 
         if (subscriberResult.error) {
           console.error('Agent page - subscriber query error:', subscriberResult.error)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
         if (!subscriberResult.data) {
           console.error('Agent page - no subscriber found for user:', user.id)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
@@ -69,7 +67,7 @@ export default function AgentConfigClientPage() {
     }
 
     loadAgentData()
-  }, [router])
+  }, [])
 
   if (loading) {
     return (

@@ -7,10 +7,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export default function ActivityLogClientPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [subscriber, setSubscriber] = useState<any>(null)
   const [commands, setCommands] = useState<any[]>([])
@@ -27,11 +25,11 @@ export default function ActivityLogClientPage() {
       try {
         const supabase = createClient()
 
-        // Get current user
+        // Get current user (layout already verified auth)
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          console.log('📊 Activity: No user found')
-          router.push('/login')
+          console.error('📊 Activity: No user found (unexpected - layout should handle auth)')
+          setLoading(false)
           return
         }
 
@@ -46,13 +44,13 @@ export default function ActivityLogClientPage() {
 
         if (subscriberResult.error) {
           console.error('Activity page - subscriber query error:', subscriberResult.error)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
         if (!subscriberResult.data) {
           console.error('Activity page - no subscriber found for user:', user.id)
-          router.push('/onboard')
+          setLoading(false)
           return
         }
 
@@ -116,7 +114,7 @@ export default function ActivityLogClientPage() {
     }
 
     loadActivityData()
-  }, [router])
+  }, [])
 
   if (loading) {
     return (
