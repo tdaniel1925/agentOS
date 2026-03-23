@@ -11,8 +11,16 @@ export default async function CalendarSetupPage() {
   const supabase = await createClient()
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+  console.log('📅 Calendar page: User check', {
+    hasUser: !!user,
+    email: user?.email,
+    error: userError?.message
+  })
+
   if (!user) {
+    console.log('📅 Calendar page: No user found, redirecting to login')
     redirect('/login')
   }
 
