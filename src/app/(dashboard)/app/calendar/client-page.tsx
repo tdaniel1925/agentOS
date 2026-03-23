@@ -25,7 +25,7 @@ export default function CalendarSetupClientPage() {
           return
         }
 
-        console.log('📅 Calendar: Loading data for', user.email)
+        console.log('📅 Calendar: Loading data for', user.email, user.id)
 
         // Get subscriber data with calendar info
         const subscriberResult: any = await (supabase as any)
@@ -34,11 +34,24 @@ export default function CalendarSetupClientPage() {
           .eq('auth_user_id', user.id)
           .single()
 
+        console.log('📅 Calendar: Query result', {
+          hasError: !!subscriberResult.error,
+          error: subscriberResult.error,
+          hasData: !!subscriberResult.data,
+          data: subscriberResult.data
+        })
+
+        if (subscriberResult.error) {
+          console.error('📅 Calendar: Query error', subscriberResult.error)
+          setLoading(false)
+          return
+        }
+
         if (subscriberResult.data) {
           setSubscriber(subscriberResult.data)
-          console.log('📅 Calendar: Data loaded')
+          console.log('📅 Calendar: Data loaded successfully')
         } else {
-          console.error('📅 Calendar: No subscriber found')
+          console.error('📅 Calendar: No subscriber data returned')
         }
       } catch (error) {
         console.error('📅 Calendar: Error', error)
@@ -70,7 +83,14 @@ export default function CalendarSetupClientPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-600">Unable to load calendar settings</p>
+          <p className="text-gray-600 text-lg mb-4">Unable to load calendar settings</p>
+          <p className="text-sm text-gray-500">Check browser console for details</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )

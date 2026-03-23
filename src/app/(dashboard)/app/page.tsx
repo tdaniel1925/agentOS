@@ -37,7 +37,7 @@ export default function DashboardPage() {
         }
 
         setUser(user)
-        console.log('📊 Dashboard: Loading data for user', user.email)
+        console.log('📊 Dashboard: Loading data for user', user.email, user.id)
 
         // Get subscriber data
         const subscriberResult: any = await (supabase as any)
@@ -46,7 +46,20 @@ export default function DashboardPage() {
           .eq('auth_user_id', user.id)
           .single()
 
+        console.log('📊 Dashboard: Subscriber query result', {
+          hasError: !!subscriberResult.error,
+          error: subscriberResult.error,
+          hasData: !!subscriberResult.data
+        })
+
+        if (subscriberResult.error) {
+          console.error('📊 Dashboard: Subscriber query error', subscriberResult.error)
+          setLoading(false)
+          return
+        }
+
         if (!subscriberResult.data) {
+          console.error('📊 Dashboard: No subscriber data found')
           setLoading(false)
           return
         }
