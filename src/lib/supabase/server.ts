@@ -49,26 +49,37 @@ export async function createClient() {
     throw new Error('Missing Supabase credentials for server client. Check environment variables.')
   }
 
+  // Debug: Log all cookies
+  const allCookies = cookieStore.getAll()
+  const authCookies = allCookies.filter(c => c.name.includes('auth'))
+  console.log('🍪 Server: Found auth cookies:', authCookies.map(c => c.name))
+
   return createServerClient<Database>(
     supabaseUrl,
     supabaseAnonKey,
     {
       cookies: {
         async get(name: string) {
-          return cookieStore.get(name)?.value
+          const value = cookieStore.get(name)?.value
+          if (name.includes('auth')) {
+            console.log(`🍪 Server: Get cookie "${name}":`, value ? 'Found' : 'Not found')
+          }
+          return value
         },
         async set(name: string, value: string, options: any) {
           try {
             cookieStore.set({ name, value, ...options })
+            console.log(`🍪 Server: Set cookie "${name}"`)
           } catch (error) {
-            // Handle cookie setting errors
+            console.error(`🍪 Server: Failed to set cookie "${name}":`, error)
           }
         },
         async remove(name: string, options: any) {
           try {
             cookieStore.set({ name, value: '', ...options })
+            console.log(`🍪 Server: Removed cookie "${name}"`)
           } catch (error) {
-            // Handle cookie removal errors
+            console.error(`🍪 Server: Failed to remove cookie "${name}":`, error)
           }
         },
       },
