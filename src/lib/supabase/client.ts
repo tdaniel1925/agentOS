@@ -19,40 +19,14 @@ export function createClient() {
     throw new Error('Missing Supabase environment variables. Please check your .env.local file and Vercel environment variables.')
   }
 
-  console.log('🔑 Creating Supabase client with:', {
-    url: supabaseUrl,
-    keyPrefix: supabaseAnonKey.slice(0, 20),
-    keyLength: supabaseAnonKey.length,
-    keyType: supabaseAnonKey.startsWith('sb_publishable_') ? 'NEW_PUBLISHABLE_KEY' : 'LEGACY_JWT_KEY'
-  })
+  console.log('🔑 Creating Supabase client')
 
-  // Configure to use cookies that server can read
+  // Use default Supabase client - it manages cookies automatically with correct names
   const client = createBrowserClient<Database>(
     supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name: string) {
-          const value = document.cookie.split('; ').find(row => row.startsWith(`${name}=`))?.split('=')[1]
-          console.log('🍪 Browser: Get cookie', name, value ? '✅ Found' : '❌ Not found')
-          return value
-        },
-        set(name: string, value: string, options: any) {
-          let cookie = `${name}=${value}; path=/; max-age=31536000; SameSite=Lax`
-          if (window.location.protocol === 'https:') {
-            cookie += '; Secure'
-          }
-          document.cookie = cookie
-          console.log('🍪 Browser: Set cookie', name, '✅')
-        },
-        remove(name: string, options: any) {
-          document.cookie = `${name}=; path=/; max-age=0`
-          console.log('🍪 Browser: Remove cookie', name, '✅')
-        }
-      }
-    }
+    supabaseAnonKey
   )
 
-  console.log('✅ Supabase browser client created with cookie storage')
+  console.log('✅ Supabase browser client created')
   return client
 }
