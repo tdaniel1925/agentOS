@@ -17,10 +17,28 @@ export default function CalendarSetupClientPage() {
       try {
         const supabase = createClient()
 
+        // Small delay to ensure session is ready
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         // Get current user (layout already verified auth)
-        const { data: { user } } = await supabase.auth.getUser()
+        let user = null
+        let attempts = 0
+        const maxAttempts = 3
+
+        // Retry logic for getting user
+        while (!user && attempts < maxAttempts) {
+          attempts++
+          const { data: { user: fetchedUser } } = await supabase.auth.getUser()
+          user = fetchedUser
+
+          if (!user && attempts < maxAttempts) {
+            console.log(`📅 Calendar: No user found, retrying... (attempt ${attempts}/${maxAttempts})`)
+            await new Promise(resolve => setTimeout(resolve, 300))
+          }
+        }
+
         if (!user) {
-          console.error('📅 Calendar: No user found (unexpected - layout should handle auth)')
+          console.error('📅 Calendar: No user found after retries')
           setLoading(false)
           return
         }

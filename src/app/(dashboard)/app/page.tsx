@@ -29,9 +29,27 @@ export default function DashboardPage() {
       try {
         const supabase = createClient()
 
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser()
+        // Small delay to ensure session is ready
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Get current user with retry logic
+        let user = null
+        let attempts = 0
+        const maxAttempts = 3
+
+        while (!user && attempts < maxAttempts) {
+          attempts++
+          const { data: { user: fetchedUser } } = await supabase.auth.getUser()
+          user = fetchedUser
+
+          if (!user && attempts < maxAttempts) {
+            console.log(`📊 Dashboard: No user found, retrying... (attempt ${attempts}/${maxAttempts})`)
+            await new Promise(resolve => setTimeout(resolve, 300))
+          }
+        }
+
         if (!user) {
+          console.error('📊 Dashboard: No user found after retries')
           setLoading(false)
           return
         }
