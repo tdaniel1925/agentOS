@@ -21,27 +21,50 @@ export default function DashboardLayout({
   useEffect(() => {
     async function checkAuth() {
       try {
-        const supabase = createClient()
-        const { data: { user }, error } = await supabase.auth.getUser()
+        // Small delay to ensure localStorage is ready after redirect
+        await new Promise(resolve => setTimeout(resolve, 100))
 
-        console.log('🔐 Dashboard Layout: Auth check', {
+        const supabase = createClient()
+
+        // Check session first
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log('🔐 Dashboard Layout: Session check', {
+          hasSession: !!session,
+          expiresAt: session?.expires_at
+        })
+
+        if (session) {
+          console.log('🔐 Dashboard Layout: ✅ Session found, user:', session.user.email)
+          setAuthenticated(true)
+          setLoading(false)
+          return
+        }
+
+        // If no session, try getUser
+        const { data: { user }, error } = await supabase.auth.getUser()
+        console.log('🔐 Dashboard Layout: User check', {
           user: user?.email,
           error: error?.message
         })
 
-        if (!user || error) {
-          console.log('🔐 Dashboard Layout: Not authenticated, redirecting to login')
-          router.push('/login')
+        if (user && !error) {
+          console.log('🔐 Dashboard Layout: ✅ User found:', user.email)
+          setAuthenticated(true)
+          setLoading(false)
           return
         }
 
-        console.log('🔐 Dashboard Layout: Authenticated as', user.email)
-        setAuthenticated(true)
+        // No session and no user - redirect after a delay to avoid loop
+        console.log('🔐 Dashboard Layout: ❌ No auth, redirecting to login in 1s')
+        setTimeout(() => {
+          router.push('/login')
+        }, 1000)
+
       } catch (error) {
         console.error('🔐 Dashboard Layout: Auth error', error)
-        router.push('/login')
-      } finally {
-        setLoading(false)
+        setTimeout(() => {
+          router.push('/login')
+        }, 1000)
       }
     }
 
