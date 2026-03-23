@@ -41,25 +41,32 @@ export function createClient() {
         },
         set(name: string, value: string, options: any) {
           if (typeof document === 'undefined') return
-          let cookie = `${name}=${value}`
-          if (options?.maxAge) {
-            cookie += `; max-age=${options.maxAge}`
+
+          // Build cookie string with all necessary attributes
+          const cookieOptions = []
+          cookieOptions.push(`${name}=${value}`)
+          cookieOptions.push(`path=${options?.path || '/'}`)
+
+          // Set max-age (default to 1 year if not specified)
+          const maxAge = options?.maxAge ?? 31536000
+          cookieOptions.push(`max-age=${maxAge}`)
+
+          // SameSite should be Lax for auth cookies
+          cookieOptions.push(`samesite=${options?.sameSite || 'lax'}`)
+
+          // Only set secure in production (https)
+          if (window.location.protocol === 'https:') {
+            cookieOptions.push('secure')
           }
-          if (options?.path) {
-            cookie += `; path=${options.path}`
-          } else {
-            cookie += '; path=/'
-          }
-          if (options?.sameSite) {
-            cookie += `; samesite=${options.sameSite}`
-          } else {
-            cookie += '; samesite=lax'
-          }
-          if (options?.secure) {
-            cookie += '; secure'
-          }
-          document.cookie = cookie
-          console.log('🍪 Set cookie:', name, '=', value.slice(0, 20) + '...')
+
+          const cookieString = cookieOptions.join('; ')
+          document.cookie = cookieString
+
+          console.log('🍪 Set cookie:', name, 'path=/', 'sameSite=lax', window.location.protocol === 'https:' ? 'secure' : 'not-secure')
+
+          // Verify it was set
+          const verification = document.cookie.includes(name)
+          console.log('🍪 Cookie verification:', verification ? '✅ Found' : '❌ Not found')
         },
         remove(name: string, options: any) {
           if (typeof document === 'undefined') return
