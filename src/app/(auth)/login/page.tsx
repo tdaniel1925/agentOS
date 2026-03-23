@@ -80,15 +80,16 @@ function LoginForm() {
       const subscriber = subscriberResult.data
 
       // Redirect based on subscriber status
+      // Use window.location.href for full page reload to ensure cookies are sent to server
       if (!subscriber) {
         console.log('➡️ No subscriber found, redirecting to onboarding')
-        router.push('/onboard')
+        window.location.href = '/onboard'
       } else if ((subscriber as { status: string }).status === 'pending') {
         console.log('➡️ Subscriber pending, redirecting to onboarding')
-        router.push('/onboard')
+        window.location.href = '/onboard'
       } else {
         console.log('➡️ Subscriber active, redirecting to dashboard')
-        router.push('/app')
+        window.location.href = '/app'
       }
     } catch (err: any) {
       console.error('💥 Login error:', err)
