@@ -20,8 +20,8 @@ export async function POST() {
       }, { status: 401 })
     }
 
-    // Update subscriber status to 'active'
-    const { data, error } = await supabase
+    // Update subscriber status to 'active' - using untyped query
+    const updateResult: any = await (supabase as any)
       .from('subscribers')
       .update({
         status: 'active',
@@ -30,6 +30,8 @@ export async function POST() {
       .eq('auth_user_id', user.id)
       .select()
       .single()
+
+    const { data, error } = updateResult
 
     if (error) {
       return NextResponse.json({
