@@ -26,51 +26,12 @@ export function createClient() {
     keyType: supabaseAnonKey.startsWith('sb_publishable_') ? 'NEW_PUBLISHABLE_KEY' : 'LEGACY_JWT_KEY'
   })
 
-  // Use localStorage instead of cookies temporarily for debugging
+  // Use default Supabase browser client - it handles cookies automatically
   const client = createBrowserClient<Database>(
     supabaseUrl,
-    supabaseAnonKey,
-    {
-      auth: {
-        storage: {
-          getItem: (key: string) => {
-            if (typeof window === 'undefined') return null
-            try {
-              const value = window.localStorage.getItem(key)
-              console.log('🔑 LocalStorage get:', key, value ? 'Found' : 'Not found')
-              return value
-            } catch (e) {
-              console.error('🔑 LocalStorage get error:', e)
-              return null
-            }
-          },
-          setItem: (key: string, value: string) => {
-            if (typeof window === 'undefined') return
-            try {
-              window.localStorage.setItem(key, value)
-              console.log('🔑 LocalStorage set:', key, '✅')
-            } catch (e) {
-              console.error('🔑 LocalStorage set error:', e)
-            }
-          },
-          removeItem: (key: string) => {
-            if (typeof window === 'undefined') return
-            try {
-              window.localStorage.removeItem(key)
-              console.log('🔑 LocalStorage remove:', key)
-            } catch (e) {
-              console.error('🔑 LocalStorage remove error:', e)
-            }
-          }
-        },
-        storageKey: 'supabase-auth-token',
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    }
+    supabaseAnonKey
   )
 
-  console.log('✅ Supabase client created')
+  console.log('✅ Supabase browser client created (using default cookie storage)')
   return client
 }
