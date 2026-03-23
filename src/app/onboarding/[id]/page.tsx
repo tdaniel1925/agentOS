@@ -167,7 +167,7 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   }
 
   function handleContinue(): void {
-    router.push('/dashboard')
+    router.push('/app')
   }
 
   // Loading state

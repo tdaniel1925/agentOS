@@ -63,20 +63,31 @@ function LoginForm() {
       console.log('✅ Signed in successfully, checking subscriber...')
 
       // Check if user has completed onboarding
-      const { data: subscriber } = await supabase
+      const subscriberResult = await supabase
         .from('subscribers')
         .select('status')
         .eq('auth_user_id', data.user.id)
-        .single()
+        .maybeSingle()
 
-      console.log('👤 Subscriber:', subscriber)
+      console.log('👤 Subscriber result:', subscriberResult)
+
+      // Check for query errors first
+      if (subscriberResult.error) {
+        console.error('❌ Error fetching subscriber:', subscriberResult.error)
+        throw new Error('Failed to check account status. Please try again.')
+      }
+
+      const subscriber = subscriberResult.data
 
       // Redirect based on subscriber status
       if (!subscriber) {
+        console.log('➡️ No subscriber found, redirecting to onboarding')
         router.push('/onboard')
       } else if ((subscriber as { status: string }).status === 'pending') {
+        console.log('➡️ Subscriber pending, redirecting to onboarding')
         router.push('/onboard')
       } else {
+        console.log('➡️ Subscriber active, redirecting to dashboard')
         router.push('/app')
       }
     } catch (err: any) {
